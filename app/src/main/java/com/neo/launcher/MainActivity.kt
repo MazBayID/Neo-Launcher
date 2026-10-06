@@ -105,7 +105,7 @@ fun NeoLauncherApp() {
                     Spacer(Modifier.height(10.dp))
                     
                     LazyVerticalGrid(columns = GridCells.Fixed(2), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
-                        items(apps) { app ->
+                        items(apps.take(15)) { app ->
                             Row(Modifier.fillMaxWidth().clickable {
                                 context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity)
                             }.padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
