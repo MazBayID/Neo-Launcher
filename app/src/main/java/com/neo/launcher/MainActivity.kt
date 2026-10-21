@@ -59,8 +59,9 @@ private val TextMuted = Color(0xFF91A2B9)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }, { openAndroidSettings() }, { openCalendar() }) }
+        setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }, { openAndroidSettings() }, { openCalendar() }, { openClock() }) }
     }
+    private fun openClock() { runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CLOCK)) } }
     private fun openAndroidSettings() {
         runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }
     }
@@ -81,11 +82,12 @@ class MainActivity : ComponentActivity() {
 private data class InstalledApp(val label: String, val packageName: String)
 
 @Composable
-private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) -> Unit, onSettings: () -> Unit, onCalendar: () -> Unit) {
+private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) -> Unit, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showApps by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
+    var selectedLetter by remember { mutableStateOf<Char?>(null) }
     var accentIndex by remember { mutableIntStateOf(0) }
     var iconScale by remember { mutableFloatStateOf(1f) }
     val accents = listOf(Cyan, Violet, Lime, Amber)
@@ -104,20 +106,20 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                 if (label.isBlank() || pkg == "com.neo.launcher") null else InstalledApp(label, pkg)
             }.distinctBy { it.packageName }.sortedBy { it.label.lowercase(Locale.getDefault()) }
     }
-    val filtered = remember(apps, search) { apps.filter { it.label.contains(search.trim(), true) } }
+    val filtered = remember(apps, search, selectedLetter) { apps.filter { (selectedLetter == null || it.label.trim().firstOrNull()?.uppercaseChar() == selectedLetter) && it.label.contains(search.trim(), true) } }
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
                 showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = "" }, onLaunch, accent, iconScale)
-                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(androidx.compose.ui.platform.LocalContext.current), { showSettings = true }, onCalendar) { showApps = true }
+                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(androidx.compose.ui.platform.LocalContext.current), { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -140,7 +142,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                     Text("LOCAL TIME", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(time, color = TextMain, fontSize = 58.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp)
+                    Text(time, color = TextMain, fontSize = 58.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp, modifier = Modifier.clickable(onClick = onClock))
                     Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
                 }
                 Text(date, color = TextMuted, fontSize = 12.sp)
@@ -152,7 +154,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                 HorizontalDivider(color = Color(0xFF263348))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        AnalogClock(Modifier.size(100.dp))
+                        AnalogClock(Modifier.size(100.dp).clickable(onClick = onClock))
                         Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -227,12 +229,12 @@ private fun AnalogClock(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float) {
+private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit) {
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("APP LIBRARY", color = accent, fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
-                Text("${apps.size} aplikasi ditemukan", color = TextMuted, fontSize = 12.sp)
+                Text("${apps.size} aplikasi ditemukan${selectedLetter?.let { " • Huruf $it" } ?: ""}", color = TextMuted, fontSize = 12.sp)
             }
             TextButton(onClick = onBack) { Text("BERANDA", color = accent, fontSize = 10.sp) }
         }
@@ -265,7 +267,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             Column(Modifier.width(24.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
                 ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#").forEach { letter ->
                     Text(letter.toString(), color = accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onSearch(if (letter == '#') "" else letter.toString()) })
+                        modifier = Modifier.clickable { onLetter(if (letter == '#') null else letter) })
                 }
             }
         }
