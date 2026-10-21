@@ -2,6 +2,7 @@ package com.neo.launcher
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -49,7 +50,16 @@ private val TextMuted = Color(0xFF91A2B9)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }) }
+        setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }, { openAndroidSettings() }, { openCalendar() }) }
+    }
+    private fun openAndroidSettings() {
+        runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }
+    }
+    private fun openCalendar() {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALENDAR)
+        runCatching { startActivity(intent) }.onFailure {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW).setType("vnd.android.cursor.item/event")) }
+        }
     }
     private fun launchPackage(packageName: String) {
         packageManager.getLaunchIntentForPackage(packageName)?.let {
@@ -62,7 +72,7 @@ class MainActivity : ComponentActivity() {
 private data class InstalledApp(val label: String, val packageName: String)
 
 @Composable
-private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) -> Unit) {
+private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) -> Unit, onSettings: () -> Unit, onCalendar: () -> Unit) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showApps by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
@@ -84,13 +94,13 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = Cyan, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             if (showApps) AppLibrary(filtered, search, { search = it }, { showApps = false }, onLaunch)
-            else HomeScreen(time, seconds, date, apps.size) { showApps = true }
+            else HomeScreen(time, seconds, date, apps.size, onSettings, onCalendar) { showApps = true }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -100,7 +110,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                 Text("NEO", color = Cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
                 Text("LAUNCHER SYSTEM", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
             }
-            Icon(Icons.Default.Settings, contentDescription = "Pengaturan", tint = TextMuted, modifier = Modifier.size(22.dp))
+            Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Android", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Selamat datang kembali.", color = TextMuted, fontSize = 13.sp)
@@ -127,10 +137,10 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                         Image(
                             painter = painterResource(id = com.neo.launcher.R.drawable.calendar_grid),
                             contentDescription = "Ilustrasi kalender",
-                            modifier = Modifier.size(width = 72.dp, height = 54.dp)
+                            modifier = Modifier.size(width = 72.dp, height = 54.dp).clickable(onClick = onCalendar)
                         )
                         Spacer(Modifier.height(4.dp))
-                        Text(date.substringAfter(", "), color = TextMain, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        Text(date.substringAfter(", "), color = TextMain, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.clickable(onClick = onCalendar))
                         Text("KALENDER", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
                 }
