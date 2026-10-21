@@ -9,124 +9,134 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.math.abs
-import kotlin.math.max
+import java.util.Date
+import java.util.Locale
 
-data class AppInfo(val label: String, val packageName: String, val icon: Drawable)
+private val Void = Color(0xFF070B12)
+private val Panel = Color(0xFF101824)
+private val Mint = Color(0xFF71F6C5)
+private val Cyan = Color(0xFF67DDF5)
+private val Muted = Color(0xFF8293A8)
+private val White = Color(0xFFF2F7FC)
+
+private data class LauncherApp(val label: String, val packageName: String, val icon: Drawable)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { NeoLauncherApp() }
+        window.statusBarColor = android.graphics.Color.rgb(7, 11, 18)
+        window.navigationBarColor = android.graphics.Color.rgb(7, 11, 18)
+        setContent { NeoLauncher() }
     }
 }
 
 @Composable
-fun NeoLauncherApp() {
+private fun NeoLauncher() {
     val context = LocalContext.current
-    var time by remember { mutableStateOf("") }
-    var apps by remember { mutableStateOf(emptyList<AppInfo>()) }
-    var laciTerbuka by remember { mutableStateOf(false) } 
+    var now by remember { mutableStateOf(Date()) }
+    var drawerOpen by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var allApps by remember { mutableStateOf(emptyList<LauncherApp>()) }
 
     LaunchedEffect(Unit) {
-        while (true) {
-            time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            delay(1000)
-        }
+        while (true) { now = Date(); delay(1000) }
     }
-
     LaunchedEffect(Unit) {
         val pm = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        apps = pm.queryIntentActivities(intent, 0)
-            .map {
-                AppInfo(
-                    label = it.loadLabel(pm).toString(),
-                    packageName = it.activityInfo.packageName,
-                    icon = it.activityInfo.loadIcon(pm)
-                )
-            }
+        allApps = pm.queryIntentActivities(intent, 0)
+            .map { LauncherApp(it.loadLabel(pm).toString(), it.activityInfo.packageName, it.activityInfo.loadIcon(pm)) }
             .filter { it.packageName != context.packageName }
             .distinctBy { it.packageName }
-            .sortedBy { it.label.lowercase() }
+            .sortedBy { it.label.lowercase(Locale.getDefault()) }
     }
+    val time = remember(now) { SimpleDateFormat("HH:mm", Locale.getDefault()).format(now) }
+    val date = remember(now) { SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now) }
+    val filtered = remember(allApps, query) { allApps.filter { it.label.contains(query, true) || it.packageName.contains(query, true) } }
 
-    MaterialTheme {
-        if (laciTerbuka) {
-            LaciAplikasi(apps = apps, onClose = { laciTerbuka = false })
-        } else {
-            Surface(Modifier.fillMaxSize(), color = Color(0xFF080A0F)) {
-                Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 14.dp)) {
-                    Text("neo@android:~$", color = Color(0xFF63E6BE), fontFamily = FontFamily.Monospace, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text("────────────────────────", color = Color(0xFF39414D), fontFamily = FontFamily.Monospace)
-                    Spacer(Modifier.height(18.dp))
-                    Text(time, color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 42.sp, fontWeight = FontWeight.Light)
-                    Spacer(Modifier.height(18.dp))
-                    
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { laciTerbuka = true }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("> ", color = Color(0xFF66D9EF), fontFamily = FontFamily.Monospace, fontSize = 18.sp)
-                        Text("apps", color = Color(0xFFE5C07B), fontFamily = FontFamily.Monospace, fontSize = 18.sp)
+    MaterialTheme(colorScheme = darkColorScheme(background = Void, surface = Panel, primary = Mint, secondary = Cyan, onBackground = White, onSurface = White)) {
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF101F2C), Void, Color(0xFF090D15))))) {
+            if (drawerOpen) {
+                AppDrawer(filtered, query, { query = it }, { drawerOpen = false; query = "" }) { app ->
+                    context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity)
+                }
+            } else {
+                Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(9.dp).clip(CircleShape).background(Mint))
+                        Spacer(Modifier.width(9.dp))
+                        Text("NEO / HOME", color = White, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 2.sp)
+                        Spacer(Modifier.weight(1f))
+                        Icon(Icons.Default.Wifi, null, tint = Mint, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(7.dp))
+                        Text("ONLINE", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.sp)
                     }
-                    Spacer(Modifier.height(10.dp))
-                    
-                    LazyVerticalGrid(columns = GridCells.Fixed(2), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
-                        items(apps.take(15)) { app ->
-                            Row(Modifier.fillMaxWidth().clickable {
-                                context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity)
-                            }.padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text("›", color = Color(0xFFC678DD), fontFamily = FontFamily.Monospace, fontSize = 18.sp)
-                                Spacer(Modifier.width(8.dp))
-                                Text(app.label, color = Color(0xFFE6E6E6), fontFamily = FontFamily.Monospace, fontSize = 15.sp, maxLines = 1)
-                            }
+                    Spacer(Modifier.height(32.dp))
+                    Text("YOUR SPACE.", color = Muted, fontSize = 11.sp, letterSpacing = 3.sp, fontFamily = FontFamily.Monospace)
+                    Text(time, color = White, fontSize = 76.sp, lineHeight = 78.sp, fontWeight = FontWeight.ExtraLight, letterSpacing = (-3).sp)
+                    Text(date.uppercase(Locale.getDefault()), color = Mint, fontSize = 11.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.5.sp)
+                    Spacer(Modifier.height(28.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        StatusTile("SYSTEM", "READY", "01", Modifier.weight(1f))
+                        StatusTile("APPLICATIONS", allApps.size.toString().padStart(2, '0'), "02", Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(28.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("QUICK ACCESS", color = White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+                            Text("Your apps, one tap away", color = Muted, fontSize = 11.sp)
+                        }
+                        Text("VIEW ALL ↗", color = Mint, fontSize = 10.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.sp,
+                            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { drawerOpen = true }.padding(10.dp))
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    LazyVerticalGrid(columns = GridCells.Fixed(4), modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(allApps.take(12), key = { it.packageName }) { app ->
+                            AppTile(app) { context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity) }
                         }
                     }
-                    Text("────────────────────────", color = Color(0xFF39414D), fontFamily = FontFamily.Monospace)
-                    Spacer(Modifier.height(8.dp))
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("WiFi ●", color = Color(0xFF63E6BE), fontFamily = FontFamily.Monospace, fontSize = 14.sp)
-                        Spacer(Modifier.weight(1f))
-                        Text("Neo Launcher v0.1", color = Color(0xFF7F8793), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Panel).clickable { drawerOpen = true }.padding(horizontal = 16.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Search, null, tint = Mint, modifier = Modifier.size(19.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Text("Search apps and tools", color = Muted, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                        Icon(Icons.Default.Apps, null, tint = Muted, modifier = Modifier.size(18.dp))
                     }
-                    Row(Modifier.fillMaxWidth().clickable { context.startActivity(Intent(Settings.ACTION_SETTINGS)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("> ", color = Color(0xFF66D9EF), fontFamily = FontFamily.Monospace)
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFFABB2BF), modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.height(14.dp))
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("N / L", color = Mint, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
                         Spacer(Modifier.width(8.dp))
-                        Text("settings", color = Color(0xFFABB2BF), fontFamily = FontFamily.Monospace)
+                        Text("NEO LAUNCHER • REDESIGN 01", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp, fontFamily = FontFamily.Monospace)
+                        Spacer(Modifier.weight(1f))
+                        Icon(Icons.Default.Settings, "Android settings", tint = Muted, modifier = Modifier.size(17.dp).clickable { context.startActivity(Intent(Settings.ACTION_SETTINGS)) })
                     }
                 }
             }
@@ -135,105 +145,47 @@ fun NeoLauncherApp() {
 }
 
 @Composable
-fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
-    val context = LocalContext.current
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    
-    val abjad = ('A'..'Z').toList()
-    var indexSentuh by remember { mutableStateOf<Int?>(null) }
-    
-    Box(Modifier.fillMaxSize().background(Color(0xFF080A0F))) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(end = 50.dp), 
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            item {
-                Text(
-                    text = "← Kembali", 
-                    color = Color(0xFFE5C07B), 
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.clickable { onClose() }.padding(bottom = 16.dp)
-                )
-            }
-            items(apps) { app ->
-                Row(
-                    Modifier.fillMaxWidth().clickable {
-                        context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity)
-                    }.padding(vertical = 12.dp), 
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        bitmap = app.icon.toBitmap(width = 120, height = 120).asImageBitmap(),
-                        contentDescription = app.label,
-                        modifier = Modifier.size(42.dp)
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Text(app.label, color = Color.White, fontSize = 16.sp, fontFamily = FontFamily.Monospace)
-                }
+private fun StatusTile(label: String, value: String, index: String, modifier: Modifier = Modifier) {
+    Column(modifier.clip(RoundedCornerShape(18.dp)).background(Panel).padding(15.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(index, color = Mint, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+            Spacer(Modifier.width(7.dp))
+            Text(label, color = Muted, fontSize = 9.sp, letterSpacing = 1.sp, fontFamily = FontFamily.Monospace)
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(value, color = White, fontSize = 20.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+    }
+}
+
+@Composable
+private fun AppTile(app: LauncherApp, onClick: () -> Unit) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Color(0x66131F2C)).clickable(onClick = onClick).padding(vertical = 12.dp, horizontal = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(bitmap = app.icon.toBitmap(width = 144, height = 144).asImageBitmap(), contentDescription = app.label, modifier = Modifier.size(42.dp))
+        Spacer(Modifier.height(8.dp))
+        Text(app.label, color = White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
+}
+
+@Composable
+private fun AppDrawer(apps: List<LauncherApp>, query: String, onQuery: (String) -> Unit, onBack: () -> Unit, onLaunch: (LauncherApp) -> Unit) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("←", color = Mint, fontSize = 24.sp, modifier = Modifier.clickable(onClick = onBack).padding(end = 14.dp))
+            Column(Modifier.weight(1f)) {
+                Text("APP LIBRARY", color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+                Text("${apps.size} APPLICATIONS", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
             }
         }
-
-        BoxWithConstraints(
-            Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .width(50.dp)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        
-                        fun updateHuruf(posY: Float, tinggiTotal: Float) {
-                            val rasio = (posY / tinggiTotal).coerceIn(0f, 0.99f)
-                            val idx = (rasio * abjad.size).toInt()
-                            indexSentuh = idx
-                            
-                            val hurufPilihan = abjad[idx].toString()
-                            val targetIndex = apps.indexOfFirst { it.label.startsWith(hurufPilihan, ignoreCase = true) }
-                            if (targetIndex >= 0) {
-                                scope.launch {
-                                    listState.scrollToItem(targetIndex + 1)
-                                }
-                            }
-                        }
-                        
-                        updateHuruf(down.position.y, size.height.toFloat())
-                        
-                        do {
-                            val event = awaitPointerEvent()
-                            event.changes.forEach { change ->
-                                if (change.pressed) {
-                                    updateHuruf(change.position.y, size.height.toFloat())
-                                }
-                                change.consume()
-                            }
-                        } while (event.changes.any { it.pressed })
-                        
-                        indexSentuh = null 
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                abjad.forEachIndexed { i, char ->
-                    val jarak = if (indexSentuh != null) abs(indexSentuh!! - i) else 100
-                    val geserX = max(0f, 60f - (jarak * 15f)) 
-                    
-                    Text(
-                        text = char.toString(),
-                        color = if (jarak == 0) Color(0xFF63E6BE) else Color(0xFF7F8793),
-                        fontSize = if (jarak == 0) 18.sp else 12.sp,
-                        fontWeight = if (jarak == 0) FontWeight.Bold else FontWeight.Normal,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.offset(x = (-geserX).dp)
-                    )
-                }
-            }
+        Spacer(Modifier.height(18.dp))
+        OutlinedTextField(value = query, onValueChange = onQuery, modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Search name or package…", color = Muted) },
+            leadingIcon = { Icon(Icons.Default.Search, null, tint = Mint) }, singleLine = true, shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = White, unfocusedTextColor = White, focusedBorderColor = Mint,
+                unfocusedBorderColor = Color(0xFF283747), cursorColor = Mint, focusedContainerColor = Panel, unfocusedContainerColor = Panel))
+        Spacer(Modifier.height(12.dp))
+        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 82.dp), horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+            items(apps, key = { it.packageName }) { app -> AppTile(app) { onLaunch(app) } }
         }
     }
 }
