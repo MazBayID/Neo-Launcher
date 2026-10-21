@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }, { openAndroidSettings() }, { openCalendar() }, { openClock() }) }
     }
-    private fun openClock() { runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CLOCK)) } }
+    private fun openClock() { runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.APP_CLOCK")) } }
     private fun openAndroidSettings() {
         runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }
     }
@@ -114,7 +114,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
                 showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, { showSettings = false }, onSettings)
-                showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = "" }, onLaunch, accent, iconScale)
+                showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = ""; selectedLetter = null }, onLaunch, accent, iconScale, selectedLetter, { selectedLetter = it })
                 else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
