@@ -1,227 +1,219 @@
 package com.neo.launcher
 
 import android.content.Intent
-import android.graphics.drawable.Drawable
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.cos
+import kotlin.math.sin
 
-private val Void = Color(0xFF070B12)
-private val Panel = Color(0xFF101824)
-private val Mint = Color(0xFF71F6C5)
-private val Cyan = Color(0xFF67DDF5)
-private val Muted = Color(0xFF8293A8)
-private val White = Color(0xFFF2F7FC)
-
-private data class LauncherApp(val label: String, val packageName: String, val icon: Drawable)
+private val Night = Color(0xFF070B14)
+private val Panel = Color(0xFF101827)
+private val PanelAlt = Color(0xFF151F31)
+private val Cyan = Color(0xFF54E6E0)
+private val TextMain = Color(0xFFF2F7FF)
+private val TextMuted = Color(0xFF91A2B9)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = android.graphics.Color.rgb(7, 11, 18)
-        window.navigationBarColor = android.graphics.Color.rgb(7, 11, 18)
-        setContent { NeoLauncher() }
+        setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }) }
+    }
+    private fun launchPackage(packageName: String) {
+        packageManager.getLaunchIntentForPackage(packageName)?.let {
+            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(it)
+        }
     }
 }
 
+private data class InstalledApp(val label: String, val packageName: String)
+
 @Composable
-private fun NeoLauncher() {
-    val context = LocalContext.current
-    var now by remember { mutableStateOf(Date()) }
-    var drawerOpen by remember { mutableStateOf(false) }
-    var query by remember { mutableStateOf("") }
-    var allApps by remember { mutableStateOf(emptyList<LauncherApp>()) }
-
+private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) -> Unit) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showApps by remember { mutableStateOf(false) }
+    var search by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
-        while (true) { now = Date(); delay(1000) }
+        while (true) { now = System.currentTimeMillis(); delay(1000) }
     }
-    LaunchedEffect(Unit) {
-        val pm = context.packageManager
-        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        allApps = pm.queryIntentActivities(intent, 0)
-            .map { LauncherApp(it.loadLabel(pm).toString(), it.activityInfo.packageName, it.activityInfo.loadIcon(pm)) }
-            .filter { it.packageName != context.packageName }
-            .distinctBy { it.packageName }
-            .sortedBy { it.label.lowercase(Locale.getDefault()) }
+    val time = remember(now) { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(now)) }
+    val seconds = remember(now) { SimpleDateFormat("ss", Locale.getDefault()).format(Date(now)) }
+    val date = remember(now) { SimpleDateFormat("EEEE, d MMMM yyyy", Locale("id", "ID")).format(Date(now)) }
+    val apps = remember(packageManager) {
+        packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+            .mapNotNull { info ->
+                val label = info.loadLabel(packageManager)?.toString()?.trim().orEmpty()
+                val pkg = info.activityInfo?.packageName.orEmpty()
+                if (label.isBlank() || pkg == "com.neo.launcher") null else InstalledApp(label, pkg)
+            }.distinctBy { it.packageName }.sortedBy { it.label.lowercase(Locale.getDefault()) }
     }
-    val time = remember(now) { SimpleDateFormat("HH:mm", Locale.getDefault()).format(now) }
-    val date = remember(now) { SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now) }
-    val filtered = remember(allApps, query) { if (query.length == 1 && query[0].isLetter()) allApps.filter { it.label.startsWith(query, true) } else allApps.filter { it.label.contains(query, true) || it.packageName.contains(query, true) } }
-
-    MaterialTheme(colorScheme = darkColorScheme(background = Void, surface = Panel, primary = Mint, secondary = Cyan, onBackground = White, onSurface = White)) {
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF101F2C), Void, Color(0xFF090D15))))) {
-            if (drawerOpen) {
-                AppDrawer(filtered, query, { query = it }, { drawerOpen = false; query = "" }) { app ->
-                    context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity)
-                }
-            } else {
-                Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(9.dp).clip(CircleShape).background(Mint))
-                        Spacer(Modifier.width(9.dp))
-                        Text("NEO / HOME", color = White, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 2.sp)
-                        Spacer(Modifier.weight(1f))
-                        Icon(Icons.Default.Wifi, null, tint = Mint, modifier = Modifier.size(17.dp))
-                        Spacer(Modifier.width(7.dp))
-                        Text("ONLINE", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.sp)
-                    }
-                    Spacer(Modifier.height(32.dp))
-                    Text("YOUR SPACE.", color = Muted, fontSize = 11.sp, letterSpacing = 3.sp, fontFamily = FontFamily.Monospace)
-                    Text(time, color = White, fontSize = 76.sp, lineHeight = 78.sp, fontWeight = FontWeight.ExtraLight, letterSpacing = (-3).sp)
-                    Text(date.uppercase(Locale.getDefault()), color = Mint, fontSize = 11.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.5.sp)
-                    Spacer(Modifier.height(28.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatusTile("SYSTEM", "READY", "01", Modifier.weight(1f))
-                        StatusTile("APPLICATIONS", allApps.size.toString().padStart(2, '0'), "02", Modifier.weight(1f))
-                    }
-                    Spacer(Modifier.height(28.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text("QUICK ACCESS", color = White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
-                            Text("Your apps, one tap away", color = Muted, fontSize = 11.sp)
-                        }
-                        Text("VIEW ALL ↗", color = Mint, fontSize = 10.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.sp,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { drawerOpen = true }.padding(10.dp))
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    LazyVerticalGrid(columns = GridCells.Fixed(4), modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(allApps.take(12), key = { it.packageName }) { app ->
-                            AppTile(app) { context.packageManager.getLaunchIntentForPackage(app.packageName)?.let(context::startActivity) }
-                        }
-                    }
-                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Panel).clickable { drawerOpen = true }.padding(horizontal = 16.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Search, null, tint = Mint, modifier = Modifier.size(19.dp))
-                        Spacer(Modifier.width(12.dp))
-                        Text("Search apps and tools", color = Muted, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                        Icon(Icons.Default.Apps, null, tint = Muted, modifier = Modifier.size(18.dp))
-                    }
-                    Spacer(Modifier.height(14.dp))
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("N / L", color = Mint, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
-                        Spacer(Modifier.width(8.dp))
-                        Text("NEO LAUNCHER • REDESIGN 01", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp, fontFamily = FontFamily.Monospace)
-                        Spacer(Modifier.weight(1f))
-                        Icon(Icons.Default.Settings, "Android settings", tint = Muted, modifier = Modifier.size(17.dp).clickable { context.startActivity(Intent(Settings.ACTION_SETTINGS)) })
-                    }
-                }
-            }
+    val filtered = remember(apps, search) { apps.filter { it.label.contains(search.trim(), true) } }
+    MaterialTheme(colorScheme = darkColorScheme(primary = Cyan, background = Night, surface = Panel, onSurface = TextMain)) {
+        Surface(Modifier.fillMaxSize(), color = Night) {
+            if (showApps) AppLibrary(filtered, search, { search = it }, { showApps = false }, onLaunch)
+            else HomeScreen(time, seconds, date, apps.size) { showApps = true }
         }
     }
 }
 
 @Composable
-private fun StatusTile(label: String, value: String, index: String, modifier: Modifier = Modifier) {
-    Column(modifier.clip(RoundedCornerShape(18.dp)).background(Panel).padding(15.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(index, color = Mint, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
-            Spacer(Modifier.width(7.dp))
-            Text(label, color = Muted, fontSize = 9.sp, letterSpacing = 1.sp, fontFamily = FontFamily.Monospace)
-        }
-        Spacer(Modifier.height(10.dp))
-        Text(value, color = White, fontSize = 20.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
-    }
-}
-
-@Composable
-private fun AppTile(app: LauncherApp, onClick: () -> Unit) {
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Color(0x66131F2C)).clickable(onClick = onClick).padding(vertical = 12.dp, horizontal = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(bitmap = app.icon.toBitmap(width = 144, height = 144).asImageBitmap(), contentDescription = app.label, modifier = Modifier.size(42.dp))
-        Spacer(Modifier.height(8.dp))
-        Text(app.label, color = White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-    }
-}
-
-@Composable
-private fun AppDrawer(apps: List<LauncherApp>, query: String, onQuery: (String) -> Unit, onBack: () -> Unit, onLaunch: (LauncherApp) -> Unit) {
-    val alphabet = listOf("#") + ('A'..'Z').map { it.toString() }
-    val activeLetter = query.takeIf { it.length == 1 && it[0].isLetter() }?.uppercase(Locale.ROOT)
+private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, onOpenApps: () -> Unit) {
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()
-            .padding(start = 18.dp, end = 12.dp, top = 12.dp, bottom = 10.dp)
+        Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(17.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("←", color = Mint, fontSize = 24.sp,
-                modifier = Modifier.clickable(onClick = onBack).padding(end = 14.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("APP LIBRARY", color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                Text("${apps.size} APPLICATIONS", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                Text("NEO", color = Cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
+                Text("LAUNCHER SYSTEM", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
             }
-            Text("NEO / 01", color = Mint, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+            Icon(Icons.Default.Settings, contentDescription = "Pengaturan", tint = TextMuted, modifier = Modifier.size(22.dp))
         }
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = query, onValueChange = onQuery, modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search apps…", color = Muted) },
-            leadingIcon = { Icon(Icons.Default.Search, null, tint = Mint) },
-            trailingIcon = { if (query.isNotEmpty()) Text("×", color = Mint, fontSize = 20.sp,
-                modifier = Modifier.clickable { onQuery("") }.padding(horizontal = 12.dp)) },
-            singleLine = true, shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = White, unfocusedTextColor = White,
-                focusedBorderColor = Mint, unfocusedBorderColor = Color(0xFF283747),
-                cursorColor = Mint, focusedContainerColor = Panel, unfocusedContainerColor = Panel
-            )
-        )
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 82.dp), modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 18.dp)
-            ) {
-                items(apps, key = { it.packageName }) { app -> AppTile(app) { onLaunch(app) } }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Selamat datang kembali.", color = TextMuted, fontSize = 13.sp)
+            Text("Waktu berjalan\nbersamamu.", color = TextMain, fontSize = 29.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold)
+        }
+        Surface(color = Panel, shape = RoundedCornerShape(28.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Icon(Icons.Default.Timelapse, contentDescription = null, tint = Cyan, modifier = Modifier.size(16.dp))
+                    Text("LOCAL TIME", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
+                }
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(time, color = TextMain, fontSize = 58.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp)
+                    Text(":$seconds", color = Cyan, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
+                }
+                Text(date, color = TextMuted, fontSize = 12.sp)
+                HorizontalDivider(color = Color(0xFF263348))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        AnalogClock(Modifier.size(100.dp))
+                        Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = Cyan, modifier = Modifier.size(29.dp))
+                        Spacer(Modifier.height(8.dp))
+                        Text(date.substringAfter(", "), color = TextMain, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        Text("KALENDER", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
+                    }
+                }
             }
-            Column(
-                modifier = Modifier.width(22.dp).fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                alphabet.forEach { letter ->
-                    val selected = if (letter == "#") query.isEmpty() else activeLetter == letter
-                    Text(
-                        text = letter,
-                        color = if (selected) Mint else Muted,
-                        fontSize = 9.sp,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                        modifier = Modifier.clickable {
-                            onQuery(if (letter == "#") "" else letter)
-                        }.padding(vertical = 1.dp)
-                    )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("QUICK ACCESS", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
+                Text("Ruang aplikasimu", color = TextMain, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Text("$appCount APPS", color = Cyan, fontSize = 10.sp, letterSpacing = 1.sp)
+        }
+        Surface(color = PanelAlt, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApps)) {
+            Row(Modifier.padding(horizontal = 18.dp, vertical = 17.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Apps, contentDescription = null, tint = Cyan, modifier = Modifier.size(28.dp))
+                Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                    Text("App Library", color = TextMain, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Cari dan buka aplikasi", color = TextMuted, fontSize = 11.sp)
+                }
+                Text("↗", color = Cyan, fontSize = 24.sp)
+            }
+        }
+        Spacer(Modifier.weight(1f))
+        Text("NEO LAUNCHER • BUILD 0.2.0", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+    }
+}
+
+@Composable
+private fun AnalogClock(modifier: Modifier = Modifier) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1000) } }
+    val c = remember(now) { java.util.Calendar.getInstance().apply { timeInMillis = now } }
+    val sec = c.get(java.util.Calendar.SECOND)
+    val min = c.get(java.util.Calendar.MINUTE) + sec / 60f
+    val hour = c.get(java.util.Calendar.HOUR) + min / 60f
+    Canvas(modifier) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val r = size.minDimension * 0.44f
+        drawCircle(Color(0xFF1B2A3D), r, center)
+        drawCircle(Cyan.copy(alpha = .75f), r, center, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx()))
+        for (i in 0 until 60) {
+            val a = Math.toRadians(i * 6.0 - 90.0)
+            val outer = r * .91f
+            val inner = r * if (i % 5 == 0) .75f else .84f
+            drawLine(if (i % 5 == 0) Cyan else TextMuted.copy(alpha = .6f),
+                Offset(center.x + cos(a).toFloat() * inner, center.y + sin(a).toFloat() * inner),
+                Offset(center.x + cos(a).toFloat() * outer, center.y + sin(a).toFloat() * outer),
+                strokeWidth = if (i % 5 == 0) 1.8.dp.toPx() else .7.dp.toPx(), cap = StrokeCap.Round)
+        }
+        fun hand(degrees: Double, length: Float, width: Float, color: Color) {
+            val a = Math.toRadians(degrees - 90.0)
+            drawLine(color, center, Offset(center.x + cos(a).toFloat() * length, center.y + sin(a).toFloat() * length), width, cap = StrokeCap.Round)
+        }
+        hand(hour * 30.0, r * .48f, 3.dp.toPx(), TextMain)
+        hand(min * 6.0, r * .68f, 2.dp.toPx(), Cyan)
+        hand(sec * 6.0, r * .78f, 1.dp.toPx(), Color(0xFFFF8D79))
+        drawCircle(TextMain, 3.dp.toPx(), center)
+    }
+}
+
+@Composable
+private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("APP LIBRARY", color = Cyan, fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
+                Text("${apps.size} aplikasi ditemukan", color = TextMuted, fontSize = 12.sp)
+            }
+            TextButton(onClick = onBack) { Text("BERANDA", color = Cyan, fontSize = 10.sp) }
+        }
+        Spacer(Modifier.height(15.dp))
+        OutlinedTextField(
+            value = search, onValueChange = onSearch, modifier = Modifier.fillMaxWidth(), singleLine = true,
+            placeholder = { Text("Cari aplikasi…", color = TextMuted) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Cyan) },
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF263348),
+                focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = Cyan)
+        )
+        Spacer(Modifier.height(10.dp))
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            items(apps, key = { it.packageName }) { app ->
+                Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().clickable { onLaunch(app.packageName) }) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Apps, contentDescription = null, tint = Cyan, modifier = Modifier.size(25.dp))
+                        Text(app.label, color = TextMain, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 12.dp).weight(1f))
+                        Text("OPEN", color = Cyan, fontSize = 9.sp, letterSpacing = 1.sp)
+                    }
                 }
             }
         }
