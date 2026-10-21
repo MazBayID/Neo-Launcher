@@ -240,6 +240,8 @@ private fun AppRow(app: AppInfo, compact: Boolean, onLaunch: () -> Unit) {
 fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
     val context = LocalContext.current
     val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    var scrollJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val abjad = ('A'..'Z').toList()
     var indexSentuh by remember { mutableIntStateOf(-1) }
     var lastIndex by remember { mutableIntStateOf(-1) }
@@ -265,7 +267,7 @@ fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
             Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(42.dp)
                 .pointerInput(apps) {
                     awaitEachGesture {
-                        suspend fun update(y: Float) {
+                        fun update(y: Float) {
                             val idx = (
                                 (y / size.height.coerceAtLeast(1)) * abjad.size
                             ).toInt().coerceIn(0, abjad.lastIndex)
@@ -291,13 +293,16 @@ fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
                                 }
 
                                 if (target >= 0 && apps.isNotEmpty()) {
-                                    // Item 0 is the "Kembali" row; apps begin at index 1.
-                                    listState.scrollToItem(target + 1)
+                                    // Batalkan scroll sebelumnya agar tidak menumpuk.
+                                    scrollJob?.cancel()
+                                    scrollJob = scope.launch {
+                                        listState.scrollToItem(target + 1)
+                                    }
                                 }
                             }
                         }
 
-                        val down = awaitFirstDown(requireUnconsumed = false)
+                       val down = awaitFirstDown(requireUnconsumed = false)
                         update(down.position.y)
 
                         do {
