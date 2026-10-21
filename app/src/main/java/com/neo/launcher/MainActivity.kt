@@ -80,7 +80,7 @@ private fun NeoLauncher() {
     }
     val time = remember(now) { SimpleDateFormat("HH:mm", Locale.getDefault()).format(now) }
     val date = remember(now) { SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now) }
-    val filtered = remember(allApps, query) { allApps.filter { it.label.contains(query, true) || it.packageName.contains(query, true) } }
+    val filtered = remember(allApps, query) { if (query.length == 1 && query[0].isLetter()) allApps.filter { it.label.startsWith(query, true) } else allApps.filter { it.label.contains(query, true) || it.packageName.contains(query, true) } }
 
     MaterialTheme(colorScheme = darkColorScheme(background = Void, surface = Panel, primary = Mint, secondary = Cyan, onBackground = White, onSurface = White)) {
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF101F2C), Void, Color(0xFF090D15))))) {
