@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <application android:theme="@style/Theme.NeoLauncher" android:label="Neo Launcher" android:allowBackup="true" android:supportsRtl="true">
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <application
+        android:theme="@style/Theme.NeoLauncher"
+        android:label="Neo Launcher"
+        android:allowBackup="true"
+        android:supportsRtl="true">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -13,5 +18,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".NeoNotificationListener"
+            android:label="Neo Launcher notifications"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

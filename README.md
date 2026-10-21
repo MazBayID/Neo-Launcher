@@ -1,12 +1,15 @@
-# Neo Launcher
+# Neo Launcher v0.2
 
-Simple Android launcher with a terminal/programming aesthetic.
+Dark terminal-style Android launcher.
 
-## V0.1
-- Monospace terminal-style UI
-- Color accents
-- Live clock
-- Lists installed launcher apps
-- Tap an app name to launch it
-- Android Home/Launcher intent
-- GitHub Actions APK build
+## New features
+- Touch-driven alphabet fast scroller with wave scaling and haptic ticks
+- Notification previews for apps that post notifications
+- Swipe app rows right for Open / App Info / Close actions
+- Spring-based Compose row motion; AndroidX DynamicAnimation dependency included
+- TextClock, next calendar event within one hour, and media-notification title fallback
+
+## Permissions / setup
+- Grant Calendar permission when prompted for upcoming-event header.
+- Open Settings > Notifications > Device & app notifications (Notification access) and enable Neo Launcher for inline previews.
+- Media title fallback reads media-style notifications; it is not a full MediaSession controller.
