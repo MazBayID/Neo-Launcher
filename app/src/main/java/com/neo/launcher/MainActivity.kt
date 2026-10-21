@@ -3,6 +3,10 @@ package com.neo.launcher
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import android.content.Context
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.widget.ImageView
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +17,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +50,9 @@ private val Night = Color(0xFF070B14)
 private val Panel = Color(0xFF101827)
 private val PanelAlt = Color(0xFF151F31)
 private val Cyan = Color(0xFF54E6E0)
+private val Violet = Color(0xFFB69CFF)
+private val Lime = Color(0xFFB8F36B)
+private val Amber = Color(0xFFFFC46B)
 private val TextMain = Color(0xFFF2F7FF)
 private val TextMuted = Color(0xFF91A2B9)
 
@@ -75,7 +84,12 @@ private data class InstalledApp(val label: String, val packageName: String)
 private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) -> Unit, onSettings: () -> Unit, onCalendar: () -> Unit) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showApps by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
+    var accentIndex by remember { mutableIntStateOf(0) }
+    var iconScale by remember { mutableFloatStateOf(1f) }
+    val accents = listOf(Cyan, Violet, Lime, Amber)
+    val accent = accents[accentIndex]
     LaunchedEffect(Unit) {
         while (true) { now = System.currentTimeMillis(); delay(1000) }
     }
@@ -91,23 +105,26 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
             }.distinctBy { it.packageName }.sortedBy { it.label.lowercase(Locale.getDefault()) }
     }
     val filtered = remember(apps, search) { apps.filter { it.label.contains(search.trim(), true) } }
-    MaterialTheme(colorScheme = darkColorScheme(primary = Cyan, background = Night, surface = Panel, onSurface = TextMain)) {
+    MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
-            if (showApps) AppLibrary(filtered, search, { search = it }, { showApps = false }, onLaunch)
-            else HomeScreen(time, seconds, date, apps.size, onSettings, onCalendar) { showApps = true }
+            when {
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, { showSettings = false }, onSettings)
+                showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = "" }, onLaunch, accent, iconScale)
+                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(androidx.compose.ui.platform.LocalContext.current), { showSettings = true }, onCalendar) { showApps = true }
+            }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("NEO", color = Cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
+                Text("NEO", color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
                 Text("LAUNCHER SYSTEM", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
             }
             Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Android", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
@@ -124,9 +141,14 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(time, color = TextMain, fontSize = 58.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp)
-                    Text(":$seconds", color = Cyan, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
+                    Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
                 }
                 Text(date, color = TextMuted, fontSize = 12.sp)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+                    Text(if (battery >= 0) "$battery%" else "Tidak tersedia", color = accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
+                LinearProgressIndicator(progress = { if (battery >= 0) battery / 100f else 0f }, modifier = Modifier.fillMaxWidth().height(3.dp), color = accent, trackColor = PanelAlt)
                 HorizontalDivider(color = Color(0xFF263348))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -151,7 +173,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                 Text("QUICK ACCESS", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
                 Text("Ruang aplikasimu", color = TextMain, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             }
-            Text("$appCount APPS", color = Cyan, fontSize = 10.sp, letterSpacing = 1.sp)
+            Text("$appCount APPS", color = accent, fontSize = 10.sp, letterSpacing = 1.sp)
         }
         Surface(color = PanelAlt, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApps)) {
             Row(Modifier.padding(horizontal = 18.dp, vertical = 17.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -205,36 +227,99 @@ private fun AnalogClock(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit) {
+private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float) {
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("APP LIBRARY", color = Cyan, fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
+                Text("APP LIBRARY", color = accent, fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
                 Text("${apps.size} aplikasi ditemukan", color = TextMuted, fontSize = 12.sp)
             }
-            TextButton(onClick = onBack) { Text("BERANDA", color = Cyan, fontSize = 10.sp) }
+            TextButton(onClick = onBack) { Text("BERANDA", color = accent, fontSize = 10.sp) }
         }
         Spacer(Modifier.height(15.dp))
         OutlinedTextField(
             value = search, onValueChange = onSearch, modifier = Modifier.fillMaxWidth(), singleLine = true,
             placeholder = { Text("Cari aplikasi…", color = TextMuted) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Cyan) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = accent) },
             shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Cyan, unfocusedBorderColor = Color(0xFF263348),
-                focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = Cyan)
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accent, unfocusedBorderColor = Color(0xFF263348),
+                focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = accent)
         )
         Spacer(Modifier.height(10.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            items(apps, key = { it.packageName }) { app ->
-                Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().clickable { onLaunch(app.packageName) }) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Apps, contentDescription = null, tint = Cyan, modifier = Modifier.size(25.dp))
-                        Text(app.label, color = TextMain, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start = 12.dp).weight(1f))
-                        Text("OPEN", color = Cyan, fontSize = 9.sp, letterSpacing = 1.sp)
+        val listState = rememberLazyListState()
+        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                items(apps, key = { it.packageName }) { app ->
+                    Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().clickable { onLaunch(app.packageName) }) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            AndroidView(factory = { ctx -> ImageView(ctx).apply { scaleType = ImageView.ScaleType.FIT_CENTER; setImageDrawable(runCatching { ctx.packageManager.getApplicationIcon(app.packageName) }.getOrNull()) } },
+                                modifier = Modifier.size((28 * iconScale).dp))
+                            Text(app.label, color = TextMain, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(start = 12.dp).weight(1f))
+                            Text("BUKA", color = accent, fontSize = 9.sp, letterSpacing = 1.sp)
+                        }
                     }
+                }
+                if (apps.isEmpty()) item { Text("Tidak ada aplikasi yang cocok. Coba kata kunci lain.", color = TextMuted, modifier = Modifier.padding(16.dp)) }
+            }
+            Column(Modifier.width(24.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
+                ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#").forEach { letter ->
+                    Text(letter.toString(), color = accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { onSearch(if (letter == '#') "" else letter.toString()) })
                 }
             }
         }
+    }
+}
+
+private fun batteryPercent(context: Context): Int {
+    val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return -1
+    val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+    val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+    return if (level >= 0 && scale > 0) (level * 100) / scale else -1
+}
+
+@Composable
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+    val accents = listOf(Cyan, Violet, Lime, Amber)
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("NEO CONTROL", color = accents[accentIndex], fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
+                Text("Kustomisasi launcher", color = TextMain, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+            }
+            TextButton(onClick = onBack) { Text("SELESAI", color = accents[accentIndex]) }
+        }
+        Text("WARNA AKSEN", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            accents.forEachIndexed { index, color ->
+                Surface(color = color, shape = CircleShape, modifier = Modifier.size(46.dp).clickable { onAccent(index) }) {
+                    Box(contentAlignment = Alignment.Center) { if (index == accentIndex) Text("✓", color = Night, fontWeight = FontWeight.Bold) }
+                }
+            }
+        }
+        HorizontalDivider(color = Color(0xFF263348))
+        Text("UKURAN IKON APLIKASI", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Text("${(iconScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 22.sp)
+        Slider(value = iconScale, onValueChange = onIconScale, valueRange = 0.8f..1.5f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
+        HorizontalDivider(color = Color(0xFF263348))
+        Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onAndroidSettings)) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Settings, contentDescription = null, tint = accents[accentIndex], modifier = Modifier.size(24.dp))
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                    Text("Pengaturan Android", color = TextMain, fontWeight = FontWeight.Medium)
+                    Text("Wi-Fi, layar, aplikasi dan sistem", color = TextMuted, fontSize = 12.sp)
+                }
+                Text("↗", color = accents[accentIndex], fontSize = 22.sp)
+            }
+        }
+        Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("CUACA", color = accents[accentIndex], fontWeight = FontWeight.Bold)
+                Text("Integrasi sumber cuaca akan ditambahkan agar data akurat dan diperbarui.", color = TextMuted, fontSize = 12.sp)
+            }
+        }
+        Spacer(Modifier.weight(1f))
+        Text("Preferensi saat ini aktif selama aplikasi berjalan. Penyimpanan permanen dan wallpaper akan ditambahkan pada tahap lanjutan.", color = TextMuted, fontSize = 11.sp)
     }
 }
