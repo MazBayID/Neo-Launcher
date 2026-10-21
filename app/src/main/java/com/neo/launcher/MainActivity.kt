@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -122,8 +124,12 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                         Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = Cyan, modifier = Modifier.size(29.dp))
-                        Spacer(Modifier.height(8.dp))
+                        Image(
+                            painter = painterResource(id = com.neo.launcher.R.drawable.calendar_grid),
+                            contentDescription = "Ilustrasi kalender",
+                            modifier = Modifier.size(width = 72.dp, height = 54.dp)
+                        )
+                        Spacer(Modifier.height(4.dp))
                         Text(date.substringAfter(", "), color = TextMain, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         Text("KALENDER", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
@@ -160,28 +166,31 @@ private fun AnalogClock(modifier: Modifier = Modifier) {
     val sec = c.get(java.util.Calendar.SECOND)
     val min = c.get(java.util.Calendar.MINUTE) + sec / 60f
     val hour = c.get(java.util.Calendar.HOUR) + min / 60f
-    Canvas(modifier) {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val r = size.minDimension * 0.44f
-        drawCircle(Color(0xFF1B2A3D), r, center)
-        drawCircle(Cyan.copy(alpha = .75f), r, center, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx()))
-        for (i in 0 until 60) {
-            val a = Math.toRadians(i * 6.0 - 90.0)
-            val outer = r * .91f
-            val inner = r * if (i % 5 == 0) .75f else .84f
-            drawLine(if (i % 5 == 0) Cyan else TextMuted.copy(alpha = .6f),
-                Offset(center.x + cos(a).toFloat() * inner, center.y + sin(a).toFloat() * inner),
-                Offset(center.x + cos(a).toFloat() * outer, center.y + sin(a).toFloat() * outer),
-                strokeWidth = if (i % 5 == 0) 1.8.dp.toPx() else .7.dp.toPx(), cap = StrokeCap.Round)
+
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Image(
+            painter = painterResource(id = com.neo.launcher.R.drawable.clock_face_05),
+            contentDescription = "Wajah jam analog Neo",
+            modifier = Modifier.fillMaxSize()
+        )
+        Canvas(Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val r = size.minDimension * 0.42f
+            fun hand(degrees: Double, length: Float, width: Float, color: Color) {
+                val a = Math.toRadians(degrees - 90.0)
+                drawLine(
+                    color = color,
+                    start = center,
+                    end = Offset(center.x + cos(a).toFloat() * length, center.y + sin(a).toFloat() * length),
+                    strokeWidth = width,
+                    cap = StrokeCap.Round
+                )
+            }
+            hand(hour * 30.0, r * 0.48f, 3.dp.toPx(), TextMain)
+            hand(min * 6.0, r * 0.67f, 2.dp.toPx(), Cyan)
+            hand(sec * 6.0, r * 0.77f, 1.dp.toPx(), Color(0xFFFF8D79))
+            drawCircle(Cyan, 3.dp.toPx(), center)
         }
-        fun hand(degrees: Double, length: Float, width: Float, color: Color) {
-            val a = Math.toRadians(degrees - 90.0)
-            drawLine(color, center, Offset(center.x + cos(a).toFloat() * length, center.y + sin(a).toFloat() * length), width, cap = StrokeCap.Round)
-        }
-        hand(hour * 30.0, r * .48f, 3.dp.toPx(), TextMain)
-        hand(min * 6.0, r * .68f, 2.dp.toPx(), Cyan)
-        hand(sec * 6.0, r * .78f, 1.dp.toPx(), Color(0xFFFF8D79))
-        drawCircle(TextMain, 3.dp.toPx(), center)
     }
 }
 
