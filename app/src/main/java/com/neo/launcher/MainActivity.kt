@@ -168,24 +168,62 @@ private fun AppTile(app: LauncherApp, onClick: () -> Unit) {
 
 @Composable
 private fun AppDrawer(apps: List<LauncherApp>, query: String, onQuery: (String) -> Unit, onBack: () -> Unit, onLaunch: (LauncherApp) -> Unit) {
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
+    val alphabet = listOf("#") + ('A'..'Z').map { it.toString() }
+    val activeLetter = query.takeIf { it.length == 1 && it[0].isLetter() }?.uppercase(Locale.ROOT)
+    Column(
+        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()
+            .padding(start = 18.dp, end = 12.dp, top = 12.dp, bottom = 10.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("←", color = Mint, fontSize = 24.sp, modifier = Modifier.clickable(onClick = onBack).padding(end = 14.dp))
+            Text("←", color = Mint, fontSize = 24.sp,
+                modifier = Modifier.clickable(onClick = onBack).padding(end = 14.dp))
             Column(Modifier.weight(1f)) {
                 Text("APP LIBRARY", color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                 Text("${apps.size} APPLICATIONS", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
             }
+            Text("NEO / 01", color = Mint, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
         }
-        Spacer(Modifier.height(18.dp))
-        OutlinedTextField(value = query, onValueChange = onQuery, modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search name or package…", color = Muted) },
-            leadingIcon = { Icon(Icons.Default.Search, null, tint = Mint) }, singleLine = true, shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = White, unfocusedTextColor = White, focusedBorderColor = Mint,
-                unfocusedBorderColor = Color(0xFF283747), cursorColor = Mint, focusedContainerColor = Panel, unfocusedContainerColor = Panel))
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(
+            value = query, onValueChange = onQuery, modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Search apps…", color = Muted) },
+            leadingIcon = { Icon(Icons.Default.Search, null, tint = Mint) },
+            trailingIcon = { if (query.isNotEmpty()) Text("×", color = Mint, fontSize = 20.sp,
+                modifier = Modifier.clickable { onQuery("") }.padding(horizontal = 12.dp)) },
+            singleLine = true, shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = White, unfocusedTextColor = White,
+                focusedBorderColor = Mint, unfocusedBorderColor = Color(0xFF283747),
+                cursorColor = Mint, focusedContainerColor = Panel, unfocusedContainerColor = Panel
+            )
+        )
         Spacer(Modifier.height(12.dp))
-        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 82.dp), horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
-            items(apps, key = { it.packageName }) { app -> AppTile(app) { onLaunch(app) } }
+        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 82.dp), modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 18.dp)
+            ) {
+                items(apps, key = { it.packageName }) { app -> AppTile(app) { onLaunch(app) } }
+            }
+            Column(
+                modifier = Modifier.width(22.dp).fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                alphabet.forEach { letter ->
+                    val selected = if (letter == "#") query.isEmpty() else activeLetter == letter
+                    Text(
+                        text = letter,
+                        color = if (selected) Mint else Muted,
+                        fontSize = 9.sp,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        modifier = Modifier.clickable {
+                            onQuery(if (letter == "#") "" else letter)
+                        }.padding(vertical = 1.dp)
+                    )
+                }
+            }
         }
     }
 }
