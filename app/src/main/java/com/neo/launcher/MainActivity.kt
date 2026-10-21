@@ -88,8 +88,11 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var showSettings by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<Char?>(null) }
-    var accentIndex by remember { mutableIntStateOf(0) }
-    var iconScale by remember { mutableFloatStateOf(1f) }
+    val appContext = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { appContext.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
+    var accentIndex by remember { mutableIntStateOf(prefs.getInt("accent_index", 0).coerceIn(0, 3)) }
+    var iconScale by remember { mutableFloatStateOf(prefs.getFloat("icon_scale", 1f).coerceIn(0.8f, 1.5f)) }
+    LaunchedEffect(accentIndex, iconScale) { prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale).apply() }
     val accents = listOf(Cyan, Violet, Lime, Amber)
     val accent = accents[accentIndex]
     LaunchedEffect(Unit) {
@@ -112,7 +115,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
             when {
                 showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = "" }, onLaunch, accent, iconScale)
-                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(androidx.compose.ui.platform.LocalContext.current), { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
