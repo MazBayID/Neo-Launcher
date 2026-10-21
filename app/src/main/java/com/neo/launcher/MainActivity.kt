@@ -240,7 +240,6 @@ private fun AppRow(app: AppInfo, compact: Boolean, onLaunch: () -> Unit) {
 fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
     val context = LocalContext.current
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     val abjad = ('A'..'Z').toList()
     var indexSentuh by remember { mutableIntStateOf(-1) }
     var lastIndex by remember { mutableIntStateOf(-1) }
@@ -266,20 +265,41 @@ fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
             Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(42.dp)
                 .pointerInput(apps) {
                     awaitEachGesture {
-                        val down = awaitFirstDown()
-                        fun update(y: Float) {
-                            val idx = ((y / size.height.coerceAtLeast(1)) * abjad.size).toInt().coerceIn(0, 25)
+                        suspend fun update(y: Float) {
+                            val idx = (
+                                (y / size.height.coerceAtLeast(1)) * abjad.size
+                            ).toInt().coerceIn(0, abjad.lastIndex)
+
                             indexSentuh = idx
+
                             if (idx != lastIndex) {
                                 lastIndex = idx
-                                if (android.os.Build.VERSION.SDK_INT >= 29) vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
-                                else vibrator.vibrate(8L)
+
+                                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                                    vibrator.vibrate(
+                                        VibrationEffect.createPredefined(
+                                            VibrationEffect.EFFECT_TICK
+                                        )
+                                    )
+                                } else {
+                                    vibrator.vibrate(8L)
+                                }
+
+                                val letter = abjad[idx]
+                                val target = apps.indexOfFirst {
+                                    it.label.firstOrNull()?.uppercaseChar() == letter
+                                }
+
+                                if (target >= 0 && apps.isNotEmpty()) {
+                                    // Item 0 is the "Kembali" row; apps begin at index 1.
+                                    listState.scrollToItem(target + 1)
+                                }
                             }
-                            val letter = abjad[idx]
-                            val target = apps.indexOfFirst { it.label.firstOrNull()?.uppercaseChar() == letter }
-                            if (target >= 0) scope.launch { listState.scrollToItem(target + 1) }
                         }
+
+                        val down = awaitFirstDown(requireUnconsumed = false)
                         update(down.position.y)
+
                         do {
                             val event = awaitPointerEvent()
                             event.changes.forEach { change ->
@@ -287,6 +307,7 @@ fun LaciAplikasi(apps: List<AppInfo>, onClose: () -> Unit) {
                                 change.consume()
                             }
                         } while (event.changes.any { it.pressed })
+
                         indexSentuh = -1
                         lastIndex = -1
                     }
