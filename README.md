@@ -1,15 +1,24 @@
 # Neo Launcher v0.2
 
-Dark terminal-style Android launcher.
+Dark terminal-style Android launcher built with Kotlin and Jetpack Compose.
 
-## New features
-- Touch-driven alphabet fast scroller with wave scaling and haptic ticks
+## Features
+- Terminal-inspired interface with a live clock
+- App drawer with an alphabet fast-scroller
 - Notification previews for apps that post notifications
-- Swipe app rows right for Open / App Info / Close actions
-- Spring-based Compose row motion; AndroidX DynamicAnimation dependency included
-- TextClock, next calendar event within one hour, and media-notification title fallback
+- Swipe app rows for Open, App Info, and Close actions
+- Animated Compose row motion
+- Upcoming calendar event header
+- Media-notification title fallback
 
-## Permissions / setup
-- Grant Calendar permission when prompted for upcoming-event header.
-- Open Settings > Notifications > Device & app notifications (Notification access) and enable Neo Launcher for inline previews.
-- Media title fallback reads media-style notifications; it is not a full MediaSession controller.
+## Permissions and setup
+- Grant Calendar permission when prompted to display upcoming events.
+- Enable Neo Launcher under Android Settings → Notifications → Device & app notifications (Notification access) to show notification previews.
+- The media title fallback reads media-style notifications; it is not a full MediaSession controller.
+
+## Build
+The repository includes a GitHub Actions workflow for building the Android APK. Check the Actions tab for the latest workflow run and its result.
+
+## Development notes
+- Android project uses Kotlin and Jetpack Compose.
+- Review changes on the development branch before merging them into `main`.
