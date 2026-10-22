@@ -438,6 +438,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
     }
     var gridMode by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("app_drawer_grid", false)) }
     var gridColumns by remember { mutableIntStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getInt("app_drawer_columns", 2).coerceIn(2, 4)) }
+    var showAlphabetIndex by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("show_alphabet_index", true)) }
     val visibleApps = apps.filter { !hideSystemApps || !it.isSystemApp }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -469,6 +470,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             FilterChip(selected = gridMode, onClick = { gridMode = !gridMode; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putBoolean("app_drawer_grid", gridMode).apply() }, label = { Text(if (gridMode) "Tampilan: grid" else "Tampilan: daftar") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             if (gridMode) FilterChip(selected = gridColumns > 2, onClick = { gridColumns = if (gridColumns >= 4) 2 else gridColumns + 1; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putInt("app_drawer_columns", gridColumns).apply() }, label = { Text("Kolom: $gridColumns") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) { Text("RESET", color = accent, fontSize = 10.sp) }
+            FilterChip(selected = showAlphabetIndex, onClick = { showAlphabetIndex = !showAlphabetIndex; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putBoolean("show_alphabet_index", showAlphabetIndex).apply() }, label = { Text(if (showAlphabetIndex) "A–Z: tampil" else "A–Z: sembunyi") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
         }
         val listState = rememberLazyListState()
         LaunchedEffect(apps, gridMode) { listState.scrollToItem(0) }
@@ -523,10 +525,12 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                     }
                 }
             }
+            if (showAlphabetIndex) {
             Column(Modifier.width(24.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
-                ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#").forEach { letter ->
-                    Text(letter.toString(), color = if (selectedLetter == letter) Night else accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clip(CircleShape).background(if (selectedLetter == letter) accent else Color.Transparent).clickable { onLetter(if (selectedLetter == letter) null else letter) }.padding(horizontal = 3.dp, vertical = 1.dp))
+                    ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#").forEach { letter ->
+                        Text(letter.toString(), color = if (selectedLetter == letter) Night else accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clip(CircleShape).background(if (selectedLetter == letter) accent else Color.Transparent).clickable { onLetter(if (selectedLetter == letter) null else letter) }.padding(horizontal = 3.dp, vertical = 1.dp))
+                    }
                 }
             }
         }
