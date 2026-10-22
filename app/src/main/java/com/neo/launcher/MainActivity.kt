@@ -240,6 +240,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
 
 @Composable
 private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, digitalClockWeight: Int, handThicknessScale: Float, handLengthScale: Float, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Column(
         Modifier.fillMaxSize().background(brush = when (homeBackgroundIndex) {
             1 -> Brush.verticalGradient(listOf(Color(0xFF10152F), Color(0xFF211638), Color(0xFF070B14)))
@@ -273,7 +274,12 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 }
                 if (showHomeDate) Text(date, color = TextMuted, fontSize = 12.sp)
                 if (showBatteryWidget) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().clickable {
+                        val batterySettings = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
+                        runCatching { context.startActivity(batterySettings) }.recoverCatching {
+                            context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                        }
+                    }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text(if (batteryCharging) "BATTERY • MENGISI" else "BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
                         Text(if (battery >= 0) "$battery%" else "Tidak tersedia", color = accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
