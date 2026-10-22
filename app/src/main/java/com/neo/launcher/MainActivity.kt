@@ -210,14 +210,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it },
                     hideSystemApps, { hideSystemApps = it }, showAppLabels
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, handStyleIndex: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, handStyleIndex: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -247,7 +247,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 Text(date, color = TextMuted, fontSize = 12.sp)
                 if (showBatteryWidget) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+                        Text(if (batteryCharging) "BATTERY • MENGISI" else "BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
                         Text(if (battery >= 0) "$battery%" else "Tidak tersedia", color = accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
                     LinearProgressIndicator(progress = { if (battery >= 0) battery / 100f else 0f }, modifier = Modifier.fillMaxWidth().height(3.dp), color = accent, trackColor = PanelAlt)
@@ -483,6 +483,14 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                 }
             }
         }
+    }
+}
+
+private fun isBatteryCharging(context: Context): Boolean {
+    val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return false
+    return when (intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)) {
+        BatteryManager.BATTERY_STATUS_CHARGING, BatteryManager.BATTERY_STATUS_FULL -> true
+        else -> false
     }
 }
 
