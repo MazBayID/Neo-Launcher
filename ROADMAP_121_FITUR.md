@@ -52,6 +52,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Pilihan warna jam digital tersimpan otomatis.
 - [x] Label build beranda diselaraskan ke v0.9.2.
 
+## Batch v0.9.3
+- [x] Tanggal pada widget jam beranda dapat ditampilkan atau disembunyikan.
+- [x] Preferensi tampilan tanggal disimpan otomatis dan dipulihkan saat aplikasi dibuka.
+- [x] Label build beranda diselaraskan ke v0.9.3.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -90,7 +95,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 29. [ ] Tema jam digital
 30. [ ] Warna jarum jam
 31. [ ] Ketebalan jarum
-32. [ ] Tampilkan tanggal di widget
+32. [x] Tampilkan/sembunyikan tanggal di widget (v0.9.3)
 33. [ ] Mode jam layar penuh
 
 ### Baterai & perangkat
