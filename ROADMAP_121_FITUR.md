@@ -168,6 +168,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Pilihan warna aksen untuk jarum analog mengikuti preferensi gaya jarum yang sudah tersimpan.
 - [x] Label build beranda diselaraskan ke v0.11.5.
 
+## Batch v0.11.6
+- [x] Jarum detik jam analog dapat ditampilkan atau disembunyikan melalui Neo Control.
+- [x] Preferensi jarum detik analog disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.11.6.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -207,6 +212,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 28. [ ] Stopwatch ringkas
 29. [x] Ukuran jam digital dapat disesuaikan (v0.9.4)
 30. [x] Warna jarum jam mengikuti aksen (v0.11.5)
+- [x] Tampilkan/sembunyikan jarum detik analog (v0.11.6)
 31. [x] Ketebalan jarum (v0.10.5)
 32. [x] Tampilkan/sembunyikan tanggal di widget (v0.9.3)
 33. [ ] Mode jam layar penuh
