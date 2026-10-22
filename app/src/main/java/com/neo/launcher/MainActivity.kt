@@ -159,7 +159,9 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var accentDigitalClock by remember { mutableStateOf(prefs.getBoolean("accent_digital_clock", false)) }
     var homeBackgroundIndex by remember { mutableIntStateOf(prefs.getInt("home_background", 0).coerceIn(0, 3)) }
     var sortDescending by remember { mutableStateOf(prefs.getBoolean("sort_descending", false)) }
+    var fuzzySearch by remember { mutableStateOf(prefs.getBoolean("fuzzy_search", false)) }
     LaunchedEffect(sortDescending) { prefs.edit().putBoolean("sort_descending", sortDescending).apply() }
+    LaunchedEffect(fuzzySearch) { prefs.edit().putBoolean("fuzzy_search", fuzzySearch).apply() }
     BackHandler(enabled = showApps || showSettings) {
         if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
     }
@@ -210,7 +212,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                 '#' -> first == null || !first.isLetter()
                 else -> first == selectedLetter
             }
-            matchesLetter && app.label.contains(search.trim(), true)
+            matchesLetter && (app.label.contains(search.trim(), true) || (fuzzySearch && fuzzyMatches(app.label, search.trim())))
         }
     }
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
@@ -220,7 +222,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
-                    search, { search = it },
+                    search, { search = it }, fuzzySearch, { fuzzySearch = it },
                     { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false },
                     onLaunch, accent, iconScale, selectedLetter, { selectedLetter = it },
                     favoritePackages, { pkg -> favoritePackages = if (pkg in favoritePackages) favoritePackages - pkg else favoritePackages + pkg },
@@ -370,7 +372,7 @@ private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4, 
 }
 
 @Composable
-private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit, favoritePackages: Set<String>, onToggleFavorite: (String) -> Unit, favoritesOnly: Boolean, onFavoritesOnly: (Boolean) -> Unit, sortDescending: Boolean, onSortDescending: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, showAppLabels: Boolean, accentAppLabels: Boolean, appLabelScale: Float) {
+private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, fuzzySearch: Boolean, onFuzzySearch: (Boolean) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit, favoritePackages: Set<String>, onToggleFavorite: (String) -> Unit, favoritesOnly: Boolean, onFavoritesOnly: (Boolean) -> Unit, sortDescending: Boolean, onSortDescending: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, showAppLabels: Boolean, accentAppLabels: Boolean, appLabelScale: Float) {
     var selectedAppForActions by remember { mutableStateOf<InstalledApp?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val drawerPrefs = remember { context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
@@ -476,6 +478,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = favoritesOnly, onClick = { onFavoritesOnly(!favoritesOnly) }, label = { Text("★ Favorit") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            FilterChip(selected = fuzzySearch, onClick = { onFuzzySearch(!fuzzySearch) }, label = { Text(if (fuzzySearch) "Pencarian fuzzy" else "Pencarian normal") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = hideSystemApps, onClick = { onHideSystemApps(!hideSystemApps) }, label = { Text(if (hideSystemApps) "Sistem: disembunyikan" else "Aplikasi sistem") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = recentOnly, onClick = { recentOnly = !recentOnly }, label = { Text("Baru dipakai") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
@@ -548,6 +551,18 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             }
         }
     }
+}
+
+private fun fuzzyMatches(label: String, query: String): Boolean {
+    if (query.isBlank()) return true
+    val target = label.lowercase(Locale.getDefault())
+    var index = 0
+    for (character in query.lowercase(Locale.getDefault())) {
+        index = target.indexOf(character, index)
+        if (index < 0) return false
+        index++
+    }
+    return true
 }
 
 private fun isBatteryCharging(context: Context): Boolean {
