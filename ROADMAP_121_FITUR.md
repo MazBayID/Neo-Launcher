@@ -128,6 +128,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Jika halaman pengaturan baterai khusus tidak tersedia, launcher membuka Pengaturan Android umum.
 - [x] Label build beranda diselaraskan ke v0.10.7.
 
+## Batch v0.10.8
+- [x] Beranda menampilkan hingga empat shortcut aplikasi favorit.
+- [x] Ketuk shortcut favorit langsung membuka aplikasi yang dipilih.
+- [x] Label build beranda diselaraskan ke v0.10.8.
+
 ## Backlog fitur
 
 ### Home & personalisasi
