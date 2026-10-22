@@ -68,17 +68,23 @@ class MainActivity : ComponentActivity() {
     }
     private fun openClock() {
         val clockIntent = Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.APP_CLOCK")
-        runCatching { startActivity(clockIntent) }.onFailure {
-            runCatching { startActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS)) }
+        runCatching { startActivity(clockIntent) }.recoverCatching {
+            startActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS))
+        }.onFailure {
+            Toast.makeText(this, "Aplikasi jam tidak tersedia", Toast.LENGTH_SHORT).show()
         }
     }
     private fun openAndroidSettings() {
-        runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }
+        runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }.onFailure {
+            Toast.makeText(this, "Pengaturan Android tidak dapat dibuka", Toast.LENGTH_SHORT).show()
+        }
     }
     private fun openCalendar() {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALENDAR)
-        runCatching { startActivity(intent) }.onFailure {
-            runCatching { startActivity(Intent(Intent.ACTION_VIEW).setType("vnd.android.cursor.item/event")) }
+        runCatching { startActivity(intent) }.recoverCatching {
+            startActivity(Intent(Intent.ACTION_VIEW).setType("vnd.android.cursor.item/event"))
+        }.onFailure {
+            Toast.makeText(this, "Aplikasi kalender tidak tersedia", Toast.LENGTH_SHORT).show()
         }
     }
     private fun launchPackage(packageName: String) {
