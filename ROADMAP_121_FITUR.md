@@ -138,6 +138,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi transparansi kartu aplikasi disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.10.9.
 
+## Batch v0.11.0
+- [x] Jumlah shortcut favorit pada beranda dapat diatur dari 1 hingga 6.
+- [x] Preferensi jumlah shortcut favorit disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.11.0.
+
 ## Backlog fitur
 
 ### Home & personalisasi
