@@ -9,6 +9,7 @@ import android.os.BatteryManager
 import android.widget.ImageView
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -90,6 +91,9 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var showSettings by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<Char?>(null) }
+    BackHandler(enabled = showApps || showSettings) {
+        if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
+    }
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { appContext.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
     var accentIndex by remember { mutableIntStateOf(prefs.getInt("accent_index", 0).coerceIn(0, 3)) }
@@ -295,6 +299,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             TextButton(onClick = { onSearch(""); onLetter(null) }) { Text("RESET", color = accent, fontSize = 10.sp) }
         }
         val listState = rememberLazyListState()
+        LaunchedEffect(apps) { listState.scrollToItem(0) }
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 items(apps, key = { it.packageName }) { app ->
@@ -403,6 +408,6 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
         }
         Spacer(Modifier.weight(1f))
-        Text("Preferensi saat ini aktif selama aplikasi berjalan. Penyimpanan permanen dan wallpaper akan ditambahkan pada tahap lanjutan.", color = TextMuted, fontSize = 11.sp)
+        Text("Preferensi tema, ukuran ikon, dan jam disimpan otomatis di perangkat ini.", color = TextMuted, fontSize = 11.sp)
     }
 }
