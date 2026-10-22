@@ -91,9 +91,6 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var showSettings by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<Char?>(null) }
-    BackHandler(enabled = showApps || showSettings) {
-        if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
-    }
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { appContext.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
     var accentIndex by remember { mutableIntStateOf(prefs.getInt("accent_index", 0).coerceIn(0, 3)) }
@@ -106,8 +103,11 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var favoritePackages by remember { mutableStateOf(prefs.getStringSet("favorite_packages", emptySet()).orEmpty().toSet()) }
     var favoritesOnly by remember { mutableStateOf(false) }
     var sortDescending by remember { mutableStateOf(false) }
+    BackHandler(enabled = showApps || showSettings) {
+        if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
+    }
     LaunchedEffect(favoritePackages) { prefs.edit().putStringSet("favorite_packages", favoritePackages.toSet()).apply() }
-    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour) {
+    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, showBatteryWidget, showAnalogClockWidget) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
             .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
             .putBoolean("use_24_hour", use24Hour).putBoolean("show_battery_widget", showBatteryWidget)
