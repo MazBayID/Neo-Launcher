@@ -160,6 +160,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var appLabelScale by remember { mutableFloatStateOf(prefs.getFloat("app_label_scale", 1f).coerceIn(0.8f, 1.4f)) }
     var appCardOpacity by remember { mutableFloatStateOf(prefs.getFloat("app_card_opacity", 1f).coerceIn(0.35f, 1f)) }
     var homeFavoriteLimit by remember { mutableIntStateOf(prefs.getInt("home_favorite_limit", 4).coerceIn(1, 6)) }
+    var homeGreetingText by remember { mutableStateOf(prefs.getString("home_greeting_text", "Selamat datang kembali.").orEmpty()) }
     var showGreeting by remember { mutableStateOf(prefs.getBoolean("show_greeting", true)) }
     var accentDigitalClock by remember { mutableStateOf(prefs.getBoolean("accent_digital_clock", false)) }
     var homeBackgroundIndex by remember { mutableIntStateOf(prefs.getInt("home_background", 0).coerceIn(0, 3)) }
@@ -171,10 +172,10 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
         if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
     }
     LaunchedEffect(favoritePackages) { prefs.edit().putStringSet("favorite_packages", favoritePackages.toSet()).apply() }
-    LaunchedEffect(hideSystemApps, showAppLabels, homeBackgroundIndex, accentAppLabels, appLabelScale, appCardOpacity, homeFavoriteLimit, showGreeting, accentDigitalClock) {
+    LaunchedEffect(hideSystemApps, showAppLabels, homeBackgroundIndex, accentAppLabels, appLabelScale, appCardOpacity, homeFavoriteLimit, homeGreetingText, showGreeting, accentDigitalClock) {
         prefs.edit().putBoolean("hide_system_apps", hideSystemApps).putBoolean("show_app_labels", showAppLabels)
             .putInt("home_background", homeBackgroundIndex).putBoolean("accent_app_labels", accentAppLabels)
-            .putFloat("app_label_scale", appLabelScale).putFloat("app_card_opacity", appCardOpacity).putInt("home_favorite_limit", homeFavoriteLimit).putBoolean("show_greeting", showGreeting)
+            .putFloat("app_label_scale", appLabelScale).putFloat("app_card_opacity", appCardOpacity).putInt("home_favorite_limit", homeFavoriteLimit).putString("home_greeting_text", homeGreetingText).putBoolean("show_greeting", showGreeting)
             .putBoolean("accent_digital_clock", accentDigitalClock).apply()
     }
     LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale) {
@@ -223,7 +224,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, showHomeDate, { showHomeDate = it }, homeClockScale, { homeClockScale = it }, homeCardOpacity, { homeCardOpacity = it }, analogClockScale, { analogClockScale = it }, digitalClockWeight, { digitalClockWeight = it }, handThicknessScale, { handThicknessScale = it }, handLengthScale, { handLengthScale = it }, handStyleIndex, { handStyleIndex = it }, showAppLabels, { showAppLabels = it }, hideSystemApps, { hideSystemApps = it }, homeBackgroundIndex, { homeBackgroundIndex = it }, accentAppLabels, { accentAppLabels = it }, appLabelScale, { appLabelScale = it }, appCardOpacity, { appCardOpacity = it }, homeFavoriteLimit, { homeFavoriteLimit = it }, showGreeting, { showGreeting = it }, accentDigitalClock, { accentDigitalClock = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, showHomeDate, { showHomeDate = it }, homeClockScale, { homeClockScale = it }, homeCardOpacity, { homeCardOpacity = it }, analogClockScale, { analogClockScale = it }, digitalClockWeight, { digitalClockWeight = it }, handThicknessScale, { handThicknessScale = it }, handLengthScale, { handLengthScale = it }, handStyleIndex, { handStyleIndex = it }, showAppLabels, { showAppLabels = it }, hideSystemApps, { hideSystemApps = it }, homeBackgroundIndex, { homeBackgroundIndex = it }, accentAppLabels, { accentAppLabels = it }, appLabelScale, { appLabelScale = it }, appCardOpacity, { appCardOpacity = it }, homeFavoriteLimit, { homeFavoriteLimit = it }, homeGreetingText, { homeGreetingText = it }, showGreeting, { showGreeting = it }, accentDigitalClock, { accentDigitalClock = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
@@ -234,14 +235,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it },
                     hideSystemApps, { hideSystemApps = it }, showAppLabels, accentAppLabels, appLabelScale, appCardOpacity
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, apps.filter { it.packageName in favoritePackages }.take(homeFavoriteLimit), onLaunch, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, apps.filter { it.packageName in favoritePackages }.take(homeFavoriteLimit), onLaunch, homeGreetingText, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, favoriteApps: List<InstalledApp>, onLaunchApp: (String) -> Unit, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, digitalClockWeight: Int, handThicknessScale: Float, handLengthScale: Float, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, favoriteApps: List<InstalledApp>, onLaunchApp: (String) -> Unit, homeGreetingText: String, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, digitalClockWeight: Int, handThicknessScale: Float, handLengthScale: Float, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     Column(
         Modifier.fillMaxSize().background(brush = when (homeBackgroundIndex) {
@@ -260,7 +261,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
             Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Neo", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
         }
         if (showGreeting) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Selamat datang kembali.", color = TextMuted, fontSize = 13.sp)
+            Text(homeGreetingText, color = TextMuted, fontSize = 13.sp)
             Text("Waktu berjalan\nbersamamu.", color = TextMain, fontSize = 29.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold)
         }
         Surface(color = Panel.copy(alpha = homeCardOpacity), shape = RoundedCornerShape(28.dp), modifier = Modifier.fillMaxWidth()) {
@@ -605,7 +606,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, showHomeDate: Boolean, onShowHomeDate: (Boolean) -> Unit, homeClockScale: Float, onHomeClockScale: (Float) -> Unit, homeCardOpacity: Float, onHomeCardOpacity: (Float) -> Unit, analogClockScale: Float, onAnalogClockScale: (Float) -> Unit, digitalClockWeight: Int, onDigitalClockWeight: (Int) -> Unit, handThicknessScale: Float, onHandThicknessScale: (Float) -> Unit, handLengthScale: Float, onHandLengthScale: (Float) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, showAppLabels: Boolean, onShowAppLabels: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, homeBackgroundIndex: Int, onHomeBackground: (Int) -> Unit, accentAppLabels: Boolean, onAccentAppLabels: (Boolean) -> Unit, appLabelScale: Float, onAppLabelScale: (Float) -> Unit, appCardOpacity: Float, onAppCardOpacity: (Float) -> Unit, homeFavoriteLimit: Int, onHomeFavoriteLimit: (Int) -> Unit, showGreeting: Boolean, onShowGreeting: (Boolean) -> Unit, accentDigitalClock: Boolean, onAccentDigitalClock: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, showHomeDate: Boolean, onShowHomeDate: (Boolean) -> Unit, homeClockScale: Float, onHomeClockScale: (Float) -> Unit, homeCardOpacity: Float, onHomeCardOpacity: (Float) -> Unit, analogClockScale: Float, onAnalogClockScale: (Float) -> Unit, digitalClockWeight: Int, onDigitalClockWeight: (Int) -> Unit, handThicknessScale: Float, onHandThicknessScale: (Float) -> Unit, handLengthScale: Float, onHandLengthScale: (Float) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, showAppLabels: Boolean, onShowAppLabels: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, homeBackgroundIndex: Int, onHomeBackground: (Int) -> Unit, accentAppLabels: Boolean, onAccentAppLabels: (Boolean) -> Unit, appLabelScale: Float, onAppLabelScale: (Float) -> Unit, appCardOpacity: Float, onAppCardOpacity: (Float) -> Unit, homeFavoriteLimit: Int, onHomeFavoriteLimit: (Int) -> Unit, homeGreetingText: String, onHomeGreetingText: (String) -> Unit, showGreeting: Boolean, onShowGreeting: (Boolean) -> Unit, accentDigitalClock: Boolean, onAccentDigitalClock: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -644,6 +645,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
             Switch(checked = hideSystemApps, onCheckedChange = onHideSystemApps, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
         }
+        OutlinedTextField(value = homeGreetingText, onValueChange = onHomeGreetingText, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Teks salam beranda") }, placeholder = { Text("Selamat datang kembali.") }, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accents[accentIndex], unfocusedBorderColor = Color(0xFF263348), focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = accents[accentIndex]))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Tampilkan salam beranda", color = TextMain, fontWeight = FontWeight.Medium)
