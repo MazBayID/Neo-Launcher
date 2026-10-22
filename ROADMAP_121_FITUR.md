@@ -47,6 +47,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Pilihan salam beranda disimpan secara lokal.
 - [x] Label build beranda diselaraskan ke v0.9.1.
 
+## Batch v0.9.2
+- [x] Warna angka jam digital dapat mengikuti warna aksen.
+- [x] Pilihan warna jam digital tersimpan otomatis.
+- [x] Label build beranda diselaraskan ke v0.9.2.
+
 ## Backlog fitur
 
 ### Home & personalisasi
