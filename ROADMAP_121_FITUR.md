@@ -93,6 +93,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Hingga 12 aplikasi terakhir disimpan lokal dan diurutkan berdasarkan pemakaian terbaru.
 - [x] Label build beranda diselaraskan ke v0.10.0.
 
+## Batch v0.10.1
+- [x] Ukuran widget jam analog beranda dapat disesuaikan dari 70% hingga 150%.
+- [x] Preferensi ukuran jam analog disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.10.1.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -123,6 +128,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 22. [ ] Pencarian fuzzy
 
 ### Widget waktu
+- [x] Ukuran widget jam analog dapat disesuaikan (v0.10.1)
 23. [x] Pilihan format tanggal
 24. [ ] Zona waktu kedua
 25. [ ] Jam dunia beberapa kota
