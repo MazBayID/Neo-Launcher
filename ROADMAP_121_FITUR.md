@@ -62,6 +62,12 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi ukuran jam disimpan lokal dan dipulihkan saat launcher dibuka.
 - [x] Label build beranda diselaraskan ke v0.9.4.
 
+## Batch v0.9.5
+- [x] App drawer mendukung tampilan daftar dan grid dua kolom.
+- [x] Pilihan tampilan daftar/grid disimpan lokal dan dipulihkan saat drawer dibuka.
+- [x] Kedua mode mempertahankan ketuk untuk membuka aplikasi, tekan lama untuk tindakan, dan favorit.
+- [x] Label build beranda diselaraskan ke v0.9.5.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -86,7 +92,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 17. [ ] Sembunyikan aplikasi pilihan
 18. [ ] Kunci aplikasi dengan autentikasi
 19. [ ] Grup aplikasi berdasarkan kategori
-20. [ ] Grid/daftar aplikasi
+20. [x] Grid/daftar aplikasi (v0.9.5)
 21. [ ] Animasi drawer
 22. [ ] Pencarian fuzzy
 
