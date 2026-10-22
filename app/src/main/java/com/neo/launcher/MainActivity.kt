@@ -148,16 +148,17 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var showAppLabels by remember { mutableStateOf(prefs.getBoolean("show_app_labels", true)) }
     var accentAppLabels by remember { mutableStateOf(prefs.getBoolean("accent_app_labels", false)) }
     var appLabelScale by remember { mutableFloatStateOf(prefs.getFloat("app_label_scale", 1f).coerceIn(0.8f, 1.4f)) }
+    var showGreeting by remember { mutableStateOf(prefs.getBoolean("show_greeting", true)) }
     var homeBackgroundIndex by remember { mutableIntStateOf(prefs.getInt("home_background", 0).coerceIn(0, 3)) }
     var sortDescending by remember { mutableStateOf(false) }
     BackHandler(enabled = showApps || showSettings) {
         if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
     }
     LaunchedEffect(favoritePackages) { prefs.edit().putStringSet("favorite_packages", favoritePackages.toSet()).apply() }
-    LaunchedEffect(hideSystemApps, showAppLabels, homeBackgroundIndex, accentAppLabels, appLabelScale) {
+    LaunchedEffect(hideSystemApps, showAppLabels, homeBackgroundIndex, accentAppLabels, appLabelScale, showGreeting) {
         prefs.edit().putBoolean("hide_system_apps", hideSystemApps).putBoolean("show_app_labels", showAppLabels)
             .putInt("home_background", homeBackgroundIndex).putBoolean("accent_app_labels", accentAppLabels)
-            .putFloat("app_label_scale", appLabelScale).apply()
+            .putFloat("app_label_scale", appLabelScale).putBoolean("show_greeting", showGreeting).apply()
     }
     LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
@@ -205,7 +206,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, handStyleIndex, { handStyleIndex = it }, showAppLabels, { showAppLabels = it }, hideSystemApps, { hideSystemApps = it }, homeBackgroundIndex, { homeBackgroundIndex = it }, accentAppLabels, { accentAppLabels = it }, appLabelScale, { appLabelScale = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, handStyleIndex, { handStyleIndex = it }, showAppLabels, { showAppLabels = it }, hideSystemApps, { hideSystemApps = it }, homeBackgroundIndex, { homeBackgroundIndex = it }, accentAppLabels, { accentAppLabels = it }, appLabelScale, { appLabelScale = it }, showGreeting, { showGreeting = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
@@ -216,14 +217,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it },
                     hideSystemApps, { hideSystemApps = it }, showAppLabels, accentAppLabels, appLabelScale
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, homeBackgroundIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, homeBackgroundIndex, showGreeting, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, handStyleIndex: Int, homeBackgroundIndex: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(brush = when (homeBackgroundIndex) {
             1 -> Brush.verticalGradient(listOf(Color(0xFF10152F), Color(0xFF211638), Color(0xFF070B14)))
@@ -240,7 +241,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
             }
             Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Neo", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
         }
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (showGreeting) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Selamat datang kembali.", color = TextMuted, fontSize = 13.sp)
             Text("Waktu berjalan\nbersamamu.", color = TextMain, fontSize = 29.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold)
         }
@@ -513,7 +514,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, showAppLabels: Boolean, onShowAppLabels: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, homeBackgroundIndex: Int, onHomeBackground: (Int) -> Unit, accentAppLabels: Boolean, onAccentAppLabels: (Boolean) -> Unit, appLabelScale: Float, onAppLabelScale: (Float) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, showAppLabels: Boolean, onShowAppLabels: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, homeBackgroundIndex: Int, onHomeBackground: (Int) -> Unit, accentAppLabels: Boolean, onAccentAppLabels: (Boolean) -> Unit, appLabelScale: Float, onAppLabelScale: (Float) -> Unit, showGreeting: Boolean, onShowGreeting: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -551,6 +552,13 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
                 Text("Filter aplikasi yang ditandai sebagai aplikasi sistem Android", color = TextMuted, fontSize = 11.sp)
             }
             Switch(checked = hideSystemApps, onCheckedChange = onHideSystemApps, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Tampilkan salam beranda", color = TextMain, fontWeight = FontWeight.Medium)
+                Text("Sembunyikan teks pembuka untuk tampilan lebih minimal", color = TextMuted, fontSize = 11.sp)
+            }
+            Switch(checked = showGreeting, onCheckedChange = onShowGreeting, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
         }
         Text("LATAR BERANDA", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
