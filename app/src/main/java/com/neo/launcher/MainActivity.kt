@@ -313,7 +313,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
             }
         }
         Spacer(Modifier.height(4.dp))
-        Text("NEO LAUNCHER • BUILD 0.10.2", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text("NEO LAUNCHER • BUILD 0.10.3", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
