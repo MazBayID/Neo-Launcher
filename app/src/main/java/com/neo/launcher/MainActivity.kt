@@ -94,14 +94,21 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     val prefs = remember { appContext.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
     var accentIndex by remember { mutableIntStateOf(prefs.getInt("accent_index", 0).coerceIn(0, 3)) }
     var iconScale by remember { mutableFloatStateOf(prefs.getFloat("icon_scale", 1f).coerceIn(0.8f, 1.5f)) }
-    LaunchedEffect(accentIndex, iconScale) { prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale).apply() }
+    var clockFaceIndex by remember { mutableIntStateOf(prefs.getInt("clock_face", 4).coerceIn(0, 4)) }
+    var showSeconds by remember { mutableStateOf(prefs.getBoolean("show_seconds", true)) }
+    var use24Hour by remember { mutableStateOf(prefs.getBoolean("use_24_hour", true)) }
+    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour) {
+        prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
+            .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
+            .putBoolean("use_24_hour", use24Hour).apply()
+    }
     val accents = listOf(Cyan, Violet, Lime, Amber)
     val accent = accents[accentIndex]
     LaunchedEffect(Unit) {
         while (true) { now = System.currentTimeMillis(); delay(1000) }
     }
-    val time = remember(now) { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(now)) }
-    val seconds = remember(now) { SimpleDateFormat("ss", Locale.getDefault()).format(Date(now)) }
+    val time = remember(now, use24Hour) { SimpleDateFormat(if (use24Hour) "HH:mm" else "h:mm a", Locale.getDefault()).format(Date(now)) }
+    val seconds = remember(now, showSeconds) { if (showSeconds) SimpleDateFormat("ss", Locale.getDefault()).format(Date(now)) else "" }
     val date = remember(now) { SimpleDateFormat("EEEE, d MMMM yyyy", Locale("id", "ID")).format(Date(now)) }
     val apps = remember(packageManager) {
         packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
@@ -125,16 +132,16 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = ""; selectedLetter = null }, onLaunch, accent, iconScale, selectedLetter, { selectedLetter = it })
-                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -158,7 +165,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(time, color = TextMain, fontSize = 58.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp, modifier = Modifier.clickable(onClick = onClock))
-                    Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
+                    if (seconds.isNotEmpty()) Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
                 }
                 Text(date, color = TextMuted, fontSize = 12.sp)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -169,7 +176,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                 HorizontalDivider(color = Color(0xFF263348))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        AnalogClock(Modifier.size(100.dp).clickable(onClick = onClock))
+                        AnalogClock(Modifier.size(100.dp).clickable(onClick = onClock), clockFaceIndex)
                         Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -208,7 +215,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
 }
 
 @Composable
-private fun AnalogClock(modifier: Modifier = Modifier) {
+private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1000) } }
     val c = remember(now) { java.util.Calendar.getInstance().apply { timeInMillis = now } }
@@ -218,7 +225,13 @@ private fun AnalogClock(modifier: Modifier = Modifier) {
 
     Box(modifier, contentAlignment = Alignment.Center) {
         Image(
-            painter = painterResource(id = com.neo.launcher.R.drawable.clock_face_05),
+            painter = painterResource(id = when (clockFaceIndex) {
+                0 -> com.neo.launcher.R.drawable.clock_face_01
+                1 -> com.neo.launcher.R.drawable.clock_face_02
+                2 -> com.neo.launcher.R.drawable.clock_face_03
+                3 -> com.neo.launcher.R.drawable.clock_face_04
+                else -> com.neo.launcher.R.drawable.clock_face_05
+            }),
             contentDescription = "Wajah jam analog Neo",
             modifier = Modifier.fillMaxSize()
         )
@@ -297,7 +310,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -319,6 +332,39 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
         Text("UKURAN IKON APLIKASI", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Text("${(iconScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 22.sp)
         Slider(value = iconScale, onValueChange = onIconScale, valueRange = 0.8f..1.5f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
+        HorizontalDivider(color = Color(0xFF263348))
+        Text("FORMAT JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(true to "24 JAM", false to "12 JAM").forEach { (is24, label) ->
+                Surface(color = if (use24Hour == is24) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f).clickable { onUse24Hour(is24) }, border = androidx.compose.foundation.BorderStroke(if (use24Hour == is24) 1.dp else 0.dp, accents[accentIndex])) {
+                    Text(label, color = if (use24Hour == is24) accents[accentIndex] else TextMuted, modifier = Modifier.padding(13.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Tampilkan detik", color = TextMain, fontWeight = FontWeight.Medium)
+                Text("Tampilkan atau sembunyikan detik", color = TextMuted, fontSize = 11.sp)
+            }
+            Switch(checked = showSeconds, onCheckedChange = onShowSeconds, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
+        }
+        Text("DESAIN JAM ANALOG", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            (0..4).forEach { index ->
+                Surface(color = if (clockFaceIndex == index) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f).clickable { onClockFace(index) }, border = androidx.compose.foundation.BorderStroke(if (clockFaceIndex == index) 1.dp else 0.dp, accents[accentIndex])) {
+                    Column(Modifier.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Image(painter = painterResource(id = when (index) {
+                            0 -> com.neo.launcher.R.drawable.clock_face_01
+                            1 -> com.neo.launcher.R.drawable.clock_face_02
+                            2 -> com.neo.launcher.R.drawable.clock_face_03
+                            3 -> com.neo.launcher.R.drawable.clock_face_04
+                            else -> com.neo.launcher.R.drawable.clock_face_05
+                        }), contentDescription = "Desain jam ${index + 1}", modifier = Modifier.size(30.dp))
+                        Text("${index + 1}", color = accents[accentIndex], fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
         HorizontalDivider(color = Color(0xFF263348))
         Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onAndroidSettings)) {
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
