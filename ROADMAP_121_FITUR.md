@@ -88,6 +88,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi transparansi kartu disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.9.9.
 
+## Batch v0.10.0
+- [x] Filter aplikasi yang baru dipakai ditambahkan ke app drawer.
+- [x] Hingga 12 aplikasi terakhir disimpan lokal dan diurutkan berdasarkan pemakaian terbaru.
+- [x] Label build beranda diselaraskan ke v0.10.0.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -106,7 +111,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 ### App drawer
 - [x] Opsi tampil/sembunyi indeks alfabet A–Z/# (v0.9.7)
 12. [x] Favorit aplikasi
-13. [ ] Bagian aplikasi terbaru
+13. [x] Bagian/filter aplikasi terbaru (v0.10.0)
 14. [x] Urutkan A–Z/Z–A (pilihan tersimpan sejak v0.9.8)
 15. [ ] Urutkan berdasarkan terakhir dipakai
 16. [x] Filter aplikasi sistem (v0.7.0)
