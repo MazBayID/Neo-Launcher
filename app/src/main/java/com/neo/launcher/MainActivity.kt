@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.widget.ImageView
+import android.widget.Toast
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -80,9 +81,14 @@ class MainActivity : ComponentActivity() {
         }
     }
     private fun launchPackage(packageName: String) {
-        packageManager.getLaunchIntentForPackage(packageName)?.let {
-            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            runCatching { startActivity(it) }
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        if (launchIntent == null) {
+            Toast.makeText(this, "Aplikasi tidak tersedia", Toast.LENGTH_SHORT).show()
+            return
+        }
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(launchIntent) }.onFailure {
+            Toast.makeText(this, "Aplikasi gagal dibuka", Toast.LENGTH_SHORT).show()
         }
     }
 }
