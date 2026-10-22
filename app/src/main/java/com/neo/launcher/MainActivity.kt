@@ -239,7 +239,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it },
                     hideSystemApps, { hideSystemApps = it }, showAppLabels, accentAppLabels, appLabelScale, appCardOpacity
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, apps.filter { it.packageName in favoritePackages }.take(homeFavoriteLimit), onLaunch, homeGreetingText, homeSubtitleText, accentHomeSubtitle, accentHomeDate, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, apps.filter { it.packageName in favoritePackages }.take(homeFavoriteLimit), onLaunch, homeGreetingText, homeSubtitleText, accentHomeSubtitle, accentHomeDate, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, showAnalogSeconds, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
