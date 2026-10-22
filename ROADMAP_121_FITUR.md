@@ -26,6 +26,12 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Widget baterai menampilkan status sedang mengisi atau penuh.
 - [x] Status pengisian dibaca langsung dari status baterai Android tanpa izin tambahan.
 
+## Batch v0.8.0
+- [x] Empat preset latar beranda: Neo gelap, Violet, Teal, dan Amber.
+- [x] Pilihan latar disimpan otomatis dan dipulihkan saat aplikasi dibuka kembali.
+- [x] Label build beranda diselaraskan dengan versi aplikasi.
+- [ ] BUG-001 tombol COPOT tetap ditunda sesuai keputusan pengujian.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -37,7 +43,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 6. [ ] Transparansi kartu
 7. [ ] Efek glow aksen
 8. [ ] Wallpaper dari galeri
-9. [ ] Wallpaper gradien bawaan
+9. [x] Wallpaper gradien bawaan (4 preset latar beranda, v0.8.0)
 10. [ ] Wallpaper berubah terjadwal
 11. [ ] Mode minimalis
 
