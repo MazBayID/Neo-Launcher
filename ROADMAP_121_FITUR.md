@@ -83,6 +83,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Indeks alfabet A–Z/# dapat ditampilkan atau disembunyikan dari app drawer.
 - [x] Label build beranda diselaraskan ke v0.9.8.
 
+## Batch v0.9.9
+- [x] Transparansi kartu widget jam beranda dapat diatur dari 35% hingga 100%.
+- [x] Preferensi transparansi kartu disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.9.9.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -91,7 +96,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 3. [ ] Ukuran ikon terpisah untuk beranda
 4. [x] Label ikon dapat disembunyikan (v0.7.0)
 5. [ ] Warna teks ikon
-6. [ ] Transparansi kartu
+6. [x] Transparansi kartu (v0.9.9)
 7. [ ] Efek glow aksen
 8. [ ] Wallpaper dari galeri
 9. [x] Wallpaper gradien bawaan (4 preset latar beranda, v0.8.0)
