@@ -1,0 +1,166 @@
+# Neo-Launcher — Rencana 121 Fitur
+
+Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedia. Fitur yang membutuhkan izin, API eksternal, atau dukungan versi Android akan diimplementasikan dengan fallback dan pengaturan privasi.
+
+## Batch awal yang sedang masuk ke build 0.3.0
+- [x] Filter alfabet aplikasi termasuk kategori `#` untuk nama yang tidak diawali huruf.
+- [x] Panel pengaturan dapat digulir di layar kecil.
+- [x] Preferensi aksen dan ukuran ikon tetap disimpan.
+- [x] Pilihan wajah jam analog (5 desain) disimpan.
+- [x] Format jam 12/24 jam.
+- [x] Tampilkan/sembunyikan detik.
+
+## Backlog fitur
+
+### Home & personalisasi
+1. [ ] Pilihan layout beranda
+2. [ ] Grid ikon yang dapat diatur
+3. [ ] Ukuran ikon terpisah untuk beranda
+4. [ ] Label ikon dapat disembunyikan
+5. [ ] Warna teks ikon
+6. [ ] Transparansi kartu
+7. [ ] Efek glow aksen
+8. [ ] Wallpaper dari galeri
+9. [ ] Wallpaper gradien bawaan
+10. [ ] Wallpaper berubah terjadwal
+11. [ ] Mode minimalis
+
+### App drawer
+12. [ ] Favorit aplikasi
+13. [ ] Bagian aplikasi terbaru
+14. [ ] Urutkan A–Z/Z–A
+15. [ ] Urutkan berdasarkan terakhir dipakai
+16. [ ] Filter aplikasi sistem
+17. [ ] Sembunyikan aplikasi pilihan
+18. [ ] Kunci aplikasi dengan autentikasi
+19. [ ] Grup aplikasi berdasarkan kategori
+20. [ ] Grid/daftar aplikasi
+21. [ ] Animasi drawer
+22. [ ] Pencarian fuzzy
+
+### Widget waktu
+23. [ ] Pilihan format tanggal
+24. [ ] Zona waktu kedua
+25. [ ] Jam dunia beberapa kota
+26. [ ] Alarm berikutnya
+27. [ ] Hitung mundur
+28. [ ] Stopwatch ringkas
+29. [ ] Tema jam digital
+30. [ ] Warna jarum jam
+31. [ ] Ketebalan jarum
+32. [ ] Tampilkan tanggal di widget
+33. [ ] Mode jam layar penuh
+
+### Baterai & perangkat
+34. [ ] Status pengisian
+35. [ ] Perkiraan waktu hingga penuh
+36. [ ] Riwayat level baterai lokal
+37. [ ] Peringatan baterai rendah
+38. [ ] Widget penyimpanan
+39. [ ] Ringkasan RAM jika diizinkan
+40. [ ] Shortcut penggunaan baterai
+41. [ ] Shortcut info perangkat
+42. [ ] Status koneksi
+43. [ ] Shortcut Bluetooth
+44. [ ] Shortcut mode pesawat melalui sistem
+
+### Cuaca
+45. [ ] Cuaca live berbasis lokasi pilihan
+46. [ ] Cuaca berdasarkan kota manual
+47. [ ] Suhu terasa
+48. [ ] Kelembapan
+49. [ ] Kecepatan angin
+50. [ ] Indeks UV
+51. [ ] Peluang hujan
+52. [ ] Prakiraan per jam
+53. [ ] Prakiraan 7 hari
+54. [ ] Penyegaran data manual
+55. [ ] Cache cuaca offline
+
+### Kalender & produktivitas
+56. [ ] Agenda hari ini
+57. [ ] Acara berikutnya
+58. [ ] Hitung mundur tanggal penting
+59. [ ] Hari libur Indonesia
+60. [ ] Shortcut tambah acara
+61. [ ] Daftar tugas sederhana
+62. [ ] Checklist harian
+63. [ ] Catatan cepat lokal
+64. [ ] Pengingat berbasis notifikasi
+65. [ ] Ringkasan agenda mingguan
+66. [ ] Widget kalender mini
+
+### Gestur & navigasi
+67. [ ] Geser ke bawah untuk pencarian
+68. [ ] Geser ke atas untuk drawer
+69. [ ] Ketuk dua kali untuk layar/aksi yang didukung
+70. [ ] Gestur beranda yang dapat dipetakan
+71. [ ] Tombol kembali konsisten
+72. [ ] Dukungan keyboard fisik
+73. [ ] Navigasi aksesibel
+74. [ ] Umpan balik haptik opsional
+75. [ ] Animasi transisi yang dapat dimatikan
+76. [ ] Mode satu tangan
+77. [ ] Shortcut aplikasi lewat gestur
+
+### Keamanan & privasi
+78. [ ] Kunci pengaturan launcher
+79. [ ] PIN untuk fitur privat
+80. [ ] Folder aplikasi privat
+81. [ ] Konfirmasi reset pengaturan
+82. [ ] Ekspor konfigurasi lokal
+83. [ ] Impor konfigurasi lokal
+84. [ ] Laporan izin yang dipakai
+85. [ ] Tanpa telemetri default
+86. [ ] Hapus data personal lokal
+87. [ ] Sembunyikan konten notifikasi
+88. [ ] Kunci aplikasi berbasis biometrik jika tersedia
+
+### Backup & pemulihan
+89. [ ] Backup preferensi ke berkas
+90. [ ] Restore preferensi dari berkas
+91. [ ] Reset tema ke default
+92. [ ] Profil tema tersimpan
+93. [ ] Ganti nama profil tema
+94. [ ] Duplikasi profil tema
+95. [ ] Ekspor daftar favorit
+96. [ ] Impor daftar favorit
+97. [ ] Riwayat perubahan konfigurasi
+98. [ ] Peringatan sebelum menghapus profil
+99. [ ] Validasi berkas impor
+
+### Performa & aksesibilitas
+100. [ ] Pengaturan animasi rendah
+101. [ ] Kurangi efek transparansi
+102. [ ] Kontras tinggi
+103. [ ] Ukuran teks UI
+104. [ ] Dukungan font skala sistem
+105. [ ] Label aksesibilitas ikon
+106. [ ] Target sentuh lebih besar
+107. [ ] Mode hemat sumber daya
+108. [ ] Muat ikon secara efisien
+109. [ ] Penanganan daftar aplikasi kosong
+110. [ ] Penanganan aplikasi yang tidak bisa dibuka
+
+### Integrasi & pemeliharaan
+111. [ ] Shortcut halaman sistem Android
+112. [ ] Shortcut detail aplikasi
+113. [ ] Shortcut izin aplikasi
+114. [ ] Pemeriksaan versi launcher
+115. [ ] Catatan rilis di dalam aplikasi
+116. [ ] Halaman diagnostik lokal
+117. [ ] Log error lokal opsional
+118. [ ] Pemeriksaan konfigurasi rusak
+119. [ ] Pemeriksaan update melalui sumber resmi
+120. [ ] Pengelolaan izin cuaca
+121. [ ] Paket tema tambahan
+
+---
+
+## Gerbang kualitas sebelum rilis
+1. Build debug berhasil di GitHub Actions.
+2. Periksa crash dan referensi resource.
+3. Pastikan preferensi bertahan setelah aplikasi ditutup dan dibuka kembali.
+4. Uji drawer, pencarian, indeks alfabet, jam, kalender, pengaturan Android, dan navigasi.
+5. Jangan menganggap cuaca/notifikasi/fitur sistem aktif sebelum integrasi dan izin terkait benar-benar ada.
+6. Signing APK final dikerjakan mendekati rilis agar update tidak bentrok dengan APK debug.
