@@ -20,6 +20,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -416,11 +417,12 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             textContentColor = TextMuted
         )
     }
+    val visibleApps = apps.filter { !hideSystemApps || !it.isSystemApp }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("APP LIBRARY", color = accent, fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
-                Text("${apps.size} aplikasi • ${favoritePackages.size} favorit${selectedLetter?.let { " • Huruf $it" } ?: ""}", color = TextMuted, fontSize = 12.sp)
+                Text("${visibleApps.size} aplikasi • ${favoritePackages.size} favorit${selectedLetter?.let { " • Huruf $it" } ?: ""}", color = TextMuted, fontSize = 12.sp)
             }
             TextButton(onClick = onBack) { Text("BERANDA", color = accent, fontSize = 10.sp) }
         }
@@ -439,18 +441,17 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                 focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = accent)
         )
         Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = favoritesOnly, onClick = { onFavoritesOnly(!favoritesOnly) }, label = { Text("★ Favorit") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = hideSystemApps, onClick = { onHideSystemApps(!hideSystemApps) }, label = { Text(if (hideSystemApps) "Sistem: disembunyikan" else "Aplikasi sistem") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = { onSearch(""); onLetter(null) }) { Text("RESET", color = accent, fontSize = 10.sp) }
+            TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) { Text("RESET", color = accent, fontSize = 10.sp) }
         }
         val listState = rememberLazyListState()
         LaunchedEffect(apps) { listState.scrollToItem(0) }
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                items(apps.filter { !hideSystemApps || !it.isSystemApp }, key = { it.packageName }) { app ->
+                items(visibleApps, key = { it.packageName }) { app ->
                     Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().combinedClickable(
                         onClick = { onLaunch(app.packageName) },
                         onLongClick = { selectedAppForActions = app }
@@ -466,7 +467,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                         }
                     }
                 }
-                if (apps.isEmpty()) item {
+                if (visibleApps.isEmpty()) item {
                     Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(if (favoritesOnly) "Belum ada aplikasi favorit yang cocok." else "Tidak ada aplikasi yang cocok.", color = TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) {
