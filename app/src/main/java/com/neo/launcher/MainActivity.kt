@@ -232,14 +232,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it },
                     hideSystemApps, { hideSystemApps = it }, showAppLabels, accentAppLabels, appLabelScale
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, apps.filter { it.packageName in favoritePackages }.take(4), onLaunch, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handThicknessScale, handLengthScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, digitalClockWeight: Int, handThicknessScale: Float, handLengthScale: Float, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, favoriteApps: List<InstalledApp>, onLaunchApp: (String) -> Unit, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, digitalClockWeight: Int, handThicknessScale: Float, handLengthScale: Float, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     Column(
         Modifier.fillMaxSize().background(brush = when (homeBackgroundIndex) {
@@ -319,6 +319,19 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                     Text("Cari dan buka aplikasi", color = TextMuted, fontSize = 11.sp)
                 }
                 Text("↗", color = Cyan, fontSize = 24.sp)
+            }
+        }
+        if (favoriteApps.isNotEmpty()) {
+            Text("FAVORIT", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                favoriteApps.forEach { app ->
+                    Surface(color = PanelAlt, shape = RoundedCornerShape(16.dp), modifier = Modifier.width(86.dp).clickable { onLaunchApp(app.packageName) }) {
+                        Column(Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            AndroidView(factory = { ctx -> ImageView(ctx).apply { scaleType = ImageView.ScaleType.FIT_CENTER; setImageDrawable(runCatching { ctx.packageManager.getApplicationIcon(app.packageName) }.getOrNull()) } }, modifier = Modifier.size(32.dp))
+                            Text(app.label, color = TextMain, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+                }
             }
         }
         Spacer(Modifier.height(4.dp))
