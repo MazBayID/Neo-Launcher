@@ -68,11 +68,16 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Kedua mode mempertahankan ketuk untuk membuka aplikasi, tekan lama untuk tindakan, dan favorit.
 - [x] Label build beranda diselaraskan ke v0.9.5.
 
+## Batch v0.9.6
+- [x] Jumlah kolom app drawer grid dapat dipilih 2–4 kolom.
+- [x] Preferensi jumlah kolom disimpan lokal dan dipulihkan saat drawer dibuka.
+- [x] Label build beranda diselaraskan ke v0.9.6.
+
 ## Backlog fitur
 
 ### Home & personalisasi
 1. [ ] Pilihan layout beranda
-2. [ ] Grid ikon yang dapat diatur
+2. [x] Grid ikon yang dapat diatur (2–4 kolom, v0.9.6)
 3. [ ] Ukuran ikon terpisah untuk beranda
 4. [x] Label ikon dapat disembunyikan (v0.7.0)
 5. [ ] Warna teks ikon
