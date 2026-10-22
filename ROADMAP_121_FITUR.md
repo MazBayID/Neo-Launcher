@@ -123,6 +123,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi panjang jarum disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.10.6.
 
+## Batch v0.10.7
+- [x] Ketuk indikator baterai di widget beranda membuka pengaturan baterai Android.
+- [x] Jika halaman pengaturan baterai khusus tidak tersedia, launcher membuka Pengaturan Android umum.
+- [x] Label build beranda diselaraskan ke v0.10.7.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -173,7 +178,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 37. [ ] Peringatan baterai rendah
 38. [ ] Widget penyimpanan
 39. [ ] Ringkasan RAM jika diizinkan
-40. [ ] Shortcut penggunaan baterai
+40. [x] Shortcut penggunaan baterai dari widget beranda (v0.10.7)
 41. [ ] Shortcut info perangkat
 42. [ ] Status koneksi
 43. [ ] Shortcut Bluetooth
