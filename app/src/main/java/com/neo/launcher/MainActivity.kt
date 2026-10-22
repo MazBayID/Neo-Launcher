@@ -97,6 +97,10 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var clockFaceIndex by remember { mutableIntStateOf(prefs.getInt("clock_face", 4).coerceIn(0, 4)) }
     var showSeconds by remember { mutableStateOf(prefs.getBoolean("show_seconds", true)) }
     var use24Hour by remember { mutableStateOf(prefs.getBoolean("use_24_hour", true)) }
+    var favoritePackages by remember { mutableStateOf(prefs.getStringSet("favorite_packages", emptySet()).orEmpty().toSet()) }
+    var favoritesOnly by remember { mutableStateOf(false) }
+    var sortDescending by remember { mutableStateOf(false) }
+    LaunchedEffect(favoritePackages) { prefs.edit().putStringSet("favorite_packages", favoritePackages.toSet()).apply() }
     LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
             .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
@@ -133,7 +137,15 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
                 showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, { showSettings = false }, onSettings)
-                showApps -> AppLibrary(filtered, search, { search = it }, { showApps = false; search = ""; selectedLetter = null }, onLaunch, accent, iconScale, selectedLetter, { selectedLetter = it })
+                showApps -> AppLibrary(
+                    filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
+                        .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
+                    search, { search = it },
+                    { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false },
+                    onLaunch, accent, iconScale, selectedLetter, { selectedLetter = it },
+                    favoritePackages, { pkg -> favoritePackages = if (pkg in favoritePackages) favoritePackages - pkg else favoritePackages + pkg },
+                    favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it }
+                )
                 else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
@@ -210,7 +222,7 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
             }
         }
         Spacer(Modifier.weight(1f))
-        Text("NEO LAUNCHER • BUILD 0.2.0", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text("NEO LAUNCHER • BUILD 0.4.0", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
@@ -257,7 +269,7 @@ private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4) 
 }
 
 @Composable
-private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit) {
+private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit, favoritePackages: Set<String>, onToggleFavorite: (String) -> Unit, favoritesOnly: Boolean, onFavoritesOnly: (Boolean) -> Unit, sortDescending: Boolean, onSortDescending: (Boolean) -> Unit) {
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -275,7 +287,13 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accent, unfocusedBorderColor = Color(0xFF263348),
                 focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = accent)
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = favoritesOnly, onClick = { onFavoritesOnly(!favoritesOnly) }, label = { Text("★ Favorit") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { onSearch(""); onLetter(null) }) { Text("RESET", color = accent, fontSize = 10.sp) }
+        }
         val listState = rememberLazyListState()
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -286,6 +304,8 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                                 modifier = Modifier.size((28 * iconScale).dp))
                             Text(app.label, color = TextMain, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(start = 12.dp).weight(1f))
+                            Text(if (app.packageName in favoritePackages) "★" else "☆", color = if (app.packageName in favoritePackages) accent else TextMuted, fontSize = 21.sp,
+                                modifier = Modifier.clickable { onToggleFavorite(app.packageName) }.padding(horizontal = 5.dp))
                             Text("BUKA", color = accent, fontSize = 9.sp, letterSpacing = 1.sp)
                         }
                     }
