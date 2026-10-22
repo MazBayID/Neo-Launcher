@@ -22,6 +22,10 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Tombol RESET membersihkan pencarian, huruf alfabet, dan filter favorit.
 - [ ] BUG-001: tombol COPOT belum membuka konfirmasi pencopotan pada perangkat penguji; sengaja ditunda untuk batch berikutnya.
 
+## Perbaikan tambahan v0.7.2
+- [x] Widget baterai menampilkan status sedang mengisi atau penuh.
+- [x] Status pengisian dibaca langsung dari status baterai Android tanpa izin tambahan.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -64,7 +68,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 33. [ ] Mode jam layar penuh
 
 ### Baterai & perangkat
-34. [ ] Status pengisian
+34. [x] Status pengisian (v0.7.2)
 35. [ ] Perkiraan waktu hingga penuh
 36. [ ] Riwayat level baterai lokal
 37. [ ] Peringatan baterai rendah
