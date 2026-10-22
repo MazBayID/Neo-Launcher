@@ -437,6 +437,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
         )
     }
     var gridMode by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("app_drawer_grid", false)) }
+    var gridColumns by remember { mutableIntStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getInt("app_drawer_columns", 2).coerceIn(2, 4)) }
     val visibleApps = apps.filter { !hideSystemApps || !it.isSystemApp }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -466,6 +467,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = hideSystemApps, onClick = { onHideSystemApps(!hideSystemApps) }, label = { Text(if (hideSystemApps) "Sistem: disembunyikan" else "Aplikasi sistem") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = gridMode, onClick = { gridMode = !gridMode; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putBoolean("app_drawer_grid", gridMode).apply() }, label = { Text(if (gridMode) "Tampilan: grid" else "Tampilan: daftar") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            if (gridMode) FilterChip(selected = gridColumns > 2, onClick = { gridColumns = if (gridColumns >= 4) 2 else gridColumns + 1; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putInt("app_drawer_columns", gridColumns).apply() }, label = { Text("Kolom: $gridColumns") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) { Text("RESET", color = accent, fontSize = 10.sp) }
         }
         val listState = rememberLazyListState()
@@ -500,7 +502,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                 }
     
             } else {
-                LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyVerticalGrid(columns = GridCells.Fixed(gridColumns), modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     gridItems(visibleApps, key = { it.packageName }) { app ->
                         Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().combinedClickable(
                             onClick = { onLaunch(app.packageName) },
