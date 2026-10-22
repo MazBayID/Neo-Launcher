@@ -32,6 +32,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Label build beranda diselaraskan dengan versi aplikasi.
 - [ ] BUG-001 tombol COPOT tetap ditunda sesuai keputusan pengujian.
 
+## Batch v0.8.1
+- [x] Pilihan warna label aplikasi mengikuti warna aksen.
+- [x] Preferensi warna label disimpan lokal.
+- [x] Label build beranda diperbarui ke v0.8.1.
+
 ## Backlog fitur
 
 ### Home & personalisasi
