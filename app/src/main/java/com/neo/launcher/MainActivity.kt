@@ -148,6 +148,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var homeClockScale by remember { mutableFloatStateOf(prefs.getFloat("home_clock_scale", 1f).coerceIn(0.8f, 1.4f)) }
     var homeCardOpacity by remember { mutableFloatStateOf(prefs.getFloat("home_card_opacity", 1f).coerceIn(0.35f, 1f)) }
     var analogClockScale by remember { mutableFloatStateOf(prefs.getFloat("analog_clock_scale", 1f).coerceIn(0.7f, 1.5f)) }
+    var digitalClockWeight by remember { mutableIntStateOf(prefs.getInt("digital_clock_weight", 0).coerceIn(0, 2)) }
     var handStyleIndex by remember { mutableIntStateOf(prefs.getInt("clock_hand_style", 0).coerceIn(0, 3)) }
     var favoritePackages by remember { mutableStateOf(prefs.getStringSet("favorite_packages", emptySet()).orEmpty().toSet()) }
     var favoritesOnly by remember { mutableStateOf(false) }
@@ -172,13 +173,13 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
             .putFloat("app_label_scale", appLabelScale).putBoolean("show_greeting", showGreeting)
             .putBoolean("accent_digital_clock", accentDigitalClock).apply()
     }
-    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale) {
+    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
             .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
             .putBoolean("use_24_hour", use24Hour).putInt("date_format", dateFormatIndex)
             .putBoolean("show_battery_widget", showBatteryWidget)
             .putBoolean("show_analog_clock_widget", showAnalogClockWidget)
-            .putInt("clock_hand_style", handStyleIndex).putBoolean("show_home_date", showHomeDate).putFloat("home_clock_scale", homeClockScale).putFloat("home_card_opacity", homeCardOpacity).putFloat("analog_clock_scale", analogClockScale).apply()
+            .putInt("clock_hand_style", handStyleIndex).putBoolean("show_home_date", showHomeDate).putFloat("home_clock_scale", homeClockScale).putFloat("home_card_opacity", homeCardOpacity).putFloat("analog_clock_scale", analogClockScale).putInt("digital_clock_weight", digitalClockWeight).apply()
     }
     val accents = listOf(Cyan, Violet, Lime, Amber)
     val accent = accents[accentIndex]
@@ -218,7 +219,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, showHomeDate, { showHomeDate = it }, homeClockScale, { homeClockScale = it }, homeCardOpacity, { homeCardOpacity = it }, analogClockScale, { analogClockScale = it }, handStyleIndex, { handStyleIndex = it }, showAppLabels, { showAppLabels = it }, hideSystemApps, { hideSystemApps = it }, homeBackgroundIndex, { homeBackgroundIndex = it }, accentAppLabels, { accentAppLabels = it }, appLabelScale, { appLabelScale = it }, showGreeting, { showGreeting = it }, accentDigitalClock, { accentDigitalClock = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, showHomeDate, { showHomeDate = it }, homeClockScale, { homeClockScale = it }, homeCardOpacity, { homeCardOpacity = it }, analogClockScale, { analogClockScale = it }, digitalClockWeight, { digitalClockWeight = it }, handStyleIndex, { handStyleIndex = it }, showAppLabels, { showAppLabels = it }, hideSystemApps, { hideSystemApps = it }, homeBackgroundIndex, { homeBackgroundIndex = it }, accentAppLabels, { accentAppLabels = it }, appLabelScale, { appLabelScale = it }, showGreeting, { showGreeting = it }, accentDigitalClock, { accentDigitalClock = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
@@ -229,14 +230,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it },
                     hideSystemApps, { hideSystemApps = it }, showAppLabels, accentAppLabels, appLabelScale
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), isBatteryCharging(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, showHomeDate, homeClockScale, homeCardOpacity, analogClockScale, digitalClockWeight, handStyleIndex, homeBackgroundIndex, showGreeting, accentDigitalClock, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, batteryCharging: Boolean, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, showHomeDate: Boolean, homeClockScale: Float, homeCardOpacity: Float, analogClockScale: Float, digitalClockWeight: Int, handStyleIndex: Int, homeBackgroundIndex: Int, showGreeting: Boolean, accentDigitalClock: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(brush = when (homeBackgroundIndex) {
             1 -> Brush.verticalGradient(listOf(Color(0xFF10152F), Color(0xFF211638), Color(0xFF070B14)))
@@ -264,7 +265,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                     Text("LOCAL TIME", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(time, color = if (accentDigitalClock) accent else TextMain, fontSize = 58.sp * homeClockScale, fontWeight = FontWeight.Light, letterSpacing = (-2).sp, modifier = Modifier.clickable(onClick = onClock))
+                    Text(time, color = if (accentDigitalClock) accent else TextMain, fontSize = 58.sp * homeClockScale, fontWeight = when (digitalClockWeight) { 1 -> FontWeight.Normal; 2 -> FontWeight.SemiBold; else -> FontWeight.Light }, letterSpacing = (-2).sp, modifier = Modifier.clickable(onClick = onClock))
                     if (seconds.isNotEmpty()) Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
                     if (period.isNotEmpty()) Text(period, color = accent, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 5.dp, bottom = 13.dp))
                 }
@@ -581,7 +582,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, showHomeDate: Boolean, onShowHomeDate: (Boolean) -> Unit, homeClockScale: Float, onHomeClockScale: (Float) -> Unit, homeCardOpacity: Float, onHomeCardOpacity: (Float) -> Unit, analogClockScale: Float, onAnalogClockScale: (Float) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, showAppLabels: Boolean, onShowAppLabels: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, homeBackgroundIndex: Int, onHomeBackground: (Int) -> Unit, accentAppLabels: Boolean, onAccentAppLabels: (Boolean) -> Unit, appLabelScale: Float, onAppLabelScale: (Float) -> Unit, showGreeting: Boolean, onShowGreeting: (Boolean) -> Unit, accentDigitalClock: Boolean, onAccentDigitalClock: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, showHomeDate: Boolean, onShowHomeDate: (Boolean) -> Unit, homeClockScale: Float, onHomeClockScale: (Float) -> Unit, homeCardOpacity: Float, onHomeCardOpacity: (Float) -> Unit, analogClockScale: Float, onAnalogClockScale: (Float) -> Unit, digitalClockWeight: Int, onDigitalClockWeight: (Int) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, showAppLabels: Boolean, onShowAppLabels: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, homeBackgroundIndex: Int, onHomeBackground: (Int) -> Unit, accentAppLabels: Boolean, onAccentAppLabels: (Boolean) -> Unit, appLabelScale: Float, onAppLabelScale: (Float) -> Unit, showGreeting: Boolean, onShowGreeting: (Boolean) -> Unit, accentDigitalClock: Boolean, onAccentDigitalClock: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -658,6 +659,15 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
         Text("UKURAN JAM ANALOG", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Text("${(analogClockScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = analogClockScale, onValueChange = onAnalogClockScale, valueRange = 0.7f..1.5f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
+        HorizontalDivider(color = Color(0xFF263348))
+        Text("KETEBALAN ANGKA JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Tipis", "Normal", "Tebal").forEachIndexed { index, label ->
+                Surface(color = if (digitalClockWeight == index) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f).clickable { onDigitalClockWeight(index) }, border = androidx.compose.foundation.BorderStroke(if (digitalClockWeight == index) 1.dp else 0.dp, accents[accentIndex])) {
+                    Text(label, color = if (digitalClockWeight == index) accents[accentIndex] else TextMuted, fontSize = 11.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 12.dp))
+                }
+            }
+        }
         HorizontalDivider(color = Color(0xFF263348))
         Text("TRANSPARANSI KARTU JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Text("${(homeCardOpacity * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
