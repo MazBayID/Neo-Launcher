@@ -143,6 +143,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi jumlah shortcut favorit disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.11.0.
 
+## Batch v0.11.1
+- [x] Teks salam di beranda dapat diedit melalui pengaturan Neo Control.
+- [x] Teks salam pilihan disimpan lokal dan dipulihkan saat launcher dibuka.
+- [x] Label build beranda diselaraskan ke v0.11.1.
+
 ## Backlog fitur
 
 ### Home & personalisasi
