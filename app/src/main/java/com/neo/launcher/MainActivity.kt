@@ -64,7 +64,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }, { openAndroidSettings() }, { openCalendar() }, { openClock() }) }
     }
-    private fun openClock() { runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.APP_CLOCK")) } }
+    private fun openClock() {
+        val clockIntent = Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.APP_CLOCK")
+        runCatching { startActivity(clockIntent) }.onFailure {
+            runCatching { startActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS)) }
+        }
+    }
     private fun openAndroidSettings() {
         runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }
     }
@@ -77,7 +82,7 @@ class MainActivity : ComponentActivity() {
     private fun launchPackage(packageName: String) {
         packageManager.getLaunchIntentForPackage(packageName)?.let {
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(it)
+            runCatching { startActivity(it) }
         }
     }
 }
