@@ -173,6 +173,12 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi jarum detik analog disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.11.6.
 
+## Batch v0.11.7
+- [x] Aplikasi individual dapat disembunyikan dari app drawer melalui menu tekan lama.
+- [x] Filter pengelolaan aplikasi tersembunyi memungkinkan aplikasi dipulihkan.
+- [x] Daftar aplikasi tersembunyi disimpan secara lokal.
+- [x] Label build beranda diselaraskan ke v0.11.7.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -195,7 +201,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 14. [x] Urutkan A–Z/Z–A (pilihan tersimpan sejak v0.9.8)
 15. [ ] Urutkan berdasarkan terakhir dipakai
 16. [x] Filter aplikasi sistem (v0.7.0)
-17. [ ] Sembunyikan aplikasi pilihan
+17. [x] Sembunyikan dan pulihkan aplikasi pilihan (v0.11.7)
 18. [ ] Kunci aplikasi dengan autentikasi
 19. [ ] Grup aplikasi berdasarkan kategori
 20. [x] Grid/daftar aplikasi (v0.9.5)
