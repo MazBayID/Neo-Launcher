@@ -198,7 +198,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 Text("NEO", color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
                 Text("LAUNCHER SYSTEM", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
             }
-            Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Android", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
+            Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Neo", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Selamat datang kembali.", color = TextMuted, fontSize = 13.sp)
