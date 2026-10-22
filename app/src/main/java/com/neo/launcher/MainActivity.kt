@@ -372,6 +372,14 @@ private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4, 
 private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit, favoritePackages: Set<String>, onToggleFavorite: (String) -> Unit, favoritesOnly: Boolean, onFavoritesOnly: (Boolean) -> Unit, sortDescending: Boolean, onSortDescending: (Boolean) -> Unit, hideSystemApps: Boolean, onHideSystemApps: (Boolean) -> Unit, showAppLabels: Boolean, accentAppLabels: Boolean, appLabelScale: Float) {
     var selectedAppForActions by remember { mutableStateOf<InstalledApp?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val drawerPrefs = remember { context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
+    var recentPackages by remember { mutableStateOf(drawerPrefs.getString("recent_packages", "").orEmpty().split("|").filter { it.isNotBlank() }) }
+    var recentOnly by remember { mutableStateOf(false) }
+    fun launchAndRecord(packageName: String) {
+        recentPackages = (listOf(packageName) + recentPackages.filterNot { it == packageName }).take(12)
+        drawerPrefs.edit().putString("recent_packages", recentPackages.joinToString("|")).apply()
+        onLaunch(packageName)
+    }
     if (selectedAppForActions != null) {
         val selectedApp = selectedAppForActions!!
         AlertDialog(
@@ -441,7 +449,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
     var gridMode by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("app_drawer_grid", false)) }
     var gridColumns by remember { mutableIntStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getInt("app_drawer_columns", 2).coerceIn(2, 4)) }
     var showAlphabetIndex by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("show_alphabet_index", true)) }
-    val visibleApps = apps.filter { !hideSystemApps || !it.isSystemApp }
+    val visibleApps = (if (recentOnly) apps.sortedBy { app -> recentPackages.indexOf(app.packageName).let { if (it < 0) Int.MAX_VALUE else it } } else apps).filter { (!hideSystemApps || !it.isSystemApp) && (!recentOnly || it.packageName in recentPackages) }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -469,9 +477,10 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             FilterChip(selected = favoritesOnly, onClick = { onFavoritesOnly(!favoritesOnly) }, label = { Text("★ Favorit") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = hideSystemApps, onClick = { onHideSystemApps(!hideSystemApps) }, label = { Text(if (hideSystemApps) "Sistem: disembunyikan" else "Aplikasi sistem") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            FilterChip(selected = recentOnly, onClick = { recentOnly = !recentOnly }, label = { Text("Baru dipakai") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = gridMode, onClick = { gridMode = !gridMode; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putBoolean("app_drawer_grid", gridMode).apply() }, label = { Text(if (gridMode) "Tampilan: grid" else "Tampilan: daftar") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             if (gridMode) FilterChip(selected = gridColumns > 2, onClick = { gridColumns = if (gridColumns >= 4) 2 else gridColumns + 1; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putInt("app_drawer_columns", gridColumns).apply() }, label = { Text("Kolom: $gridColumns") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
-            TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) { Text("RESET", color = accent, fontSize = 10.sp) }
+            TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false); recentOnly = false }) { Text("RESET", color = accent, fontSize = 10.sp) }
             FilterChip(selected = showAlphabetIndex, onClick = { showAlphabetIndex = !showAlphabetIndex; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putBoolean("show_alphabet_index", showAlphabetIndex).apply() }, label = { Text(if (showAlphabetIndex) "A–Z: tampil" else "A–Z: sembunyi") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
         }
         val listState = rememberLazyListState()
@@ -481,7 +490,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                 LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(visibleApps, key = { it.packageName }) { app ->
                         Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().combinedClickable(
-                            onClick = { onLaunch(app.packageName) },
+                            onClick = { launchAndRecord(app.packageName) },
                             onLongClick = { selectedAppForActions = app }
                         )) {
                             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -497,7 +506,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                     }
                     if (visibleApps.isEmpty()) item {
                         Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(if (favoritesOnly) "Belum ada aplikasi favorit yang cocok." else "Tidak ada aplikasi yang cocok.", color = TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            Text(if (recentOnly) "Belum ada aplikasi yang baru dipakai." else if (favoritesOnly) "Belum ada aplikasi favorit yang cocok." else "Tidak ada aplikasi yang cocok.", color = TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                             TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) {
                                 Text("HAPUS FILTER", color = accent)
                             }
@@ -509,7 +518,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                 LazyVerticalGrid(columns = GridCells.Fixed(gridColumns), modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     gridItems(visibleApps, key = { it.packageName }) { app ->
                         Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().combinedClickable(
-                            onClick = { onLaunch(app.packageName) },
+                            onClick = { launchAndRecord(app.packageName) },
                             onLongClick = { selectedAppForActions = app }
                         )) {
                             Column(Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
