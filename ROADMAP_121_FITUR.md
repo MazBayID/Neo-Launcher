@@ -98,6 +98,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi ukuran jam analog disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.10.1.
 
+## Batch v0.10.2
+- [x] Riwayat aplikasi terbaru dapat dihapus dari app drawer.
+- [x] Menghapus riwayat juga mematikan filter aplikasi terbaru.
+- [x] Label build beranda diselaraskan ke v0.10.2.
+
 ## Backlog fitur
 
 ### Home & personalisasi
