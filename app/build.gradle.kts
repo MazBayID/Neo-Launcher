@@ -10,8 +10,8 @@ android {
         applicationId = "com.neo.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 33
-        versionName = "0.10.8"
+        versionCode = 34
+        versionName = "0.10.9"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
