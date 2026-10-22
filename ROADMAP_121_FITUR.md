@@ -108,6 +108,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Pencarian normal tetap menjadi mode bawaan dan pilihan fuzzy disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.10.3.
 
+## Batch v0.10.4
+- [x] Ketebalan angka jam digital dapat dipilih: tipis, normal, atau tebal.
+- [x] Preferensi ketebalan angka jam disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.10.4.
+
 ## Backlog fitur
 
 ### Home & personalisasi
