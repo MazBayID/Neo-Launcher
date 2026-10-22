@@ -158,6 +158,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi warna subteks disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.11.3.
 
+## Batch v0.11.4
+- [x] Warna tanggal di widget jam beranda dapat mengikuti warna aksen.
+- [x] Preferensi warna tanggal disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.11.4.
+
 ## Backlog fitur
 
 ### Home & personalisasi
