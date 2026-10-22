@@ -148,6 +148,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Teks salam pilihan disimpan lokal dan dipulihkan saat launcher dibuka.
 - [x] Label build beranda diselaraskan ke v0.11.1.
 
+## Batch v0.11.2
+- [x] Subteks utama beranda dapat diedit selain teks salam.
+- [x] Subteks mendukung beberapa baris dan disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.11.2.
+
 ## Backlog fitur
 
 ### Home & personalisasi
