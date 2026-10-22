@@ -183,7 +183,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
 @Composable
 private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
-        Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
+        Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -252,7 +252,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 Text("↗", color = Cyan, fontSize = 24.sp)
             }
         }
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(4.dp))
         Text("NEO LAUNCHER • BUILD 0.4.0", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
@@ -313,7 +313,12 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
         OutlinedTextField(
             value = search, onValueChange = onSearch, modifier = Modifier.fillMaxWidth(), singleLine = true,
             placeholder = { Text("Cari aplikasi…", color = TextMuted) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = accent) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Cari aplikasi", tint = accent) },
+            trailingIcon = {
+                if (search.isNotEmpty()) TextButton(onClick = { onSearch("") }) {
+                    Text("HAPUS", color = accent, fontSize = 10.sp)
+                }
+            },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accent, unfocusedBorderColor = Color(0xFF263348),
                 focusedTextColor = TextMain, unfocusedTextColor = TextMain, cursorColor = accent)
@@ -342,12 +347,19 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                         }
                     }
                 }
-                if (apps.isEmpty()) item { Text("Tidak ada aplikasi yang cocok. Coba kata kunci lain.", color = TextMuted, modifier = Modifier.padding(16.dp)) }
+                if (apps.isEmpty()) item {
+                    Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(if (favoritesOnly) "Belum ada aplikasi favorit yang cocok." else "Tidak ada aplikasi yang cocok.", color = TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        TextButton(onClick = { onSearch(""); onLetter(null); onFavoritesOnly(false) }) {
+                            Text("HAPUS FILTER", color = accent)
+                        }
+                    }
+                }
             }
             Column(Modifier.width(24.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
                 ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#").forEach { letter ->
-                    Text(letter.toString(), color = accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onLetter(letter) })
+                    Text(letter.toString(), color = if (selectedLetter == letter) Night else accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clip(CircleShape).background(if (selectedLetter == letter) accent else Color.Transparent).clickable { onLetter(if (selectedLetter == letter) null else letter) }.padding(horizontal = 3.dp, vertical = 1.dp))
                 }
             }
         }
