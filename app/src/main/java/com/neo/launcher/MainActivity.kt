@@ -101,6 +101,8 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var clockFaceIndex by remember { mutableIntStateOf(prefs.getInt("clock_face", 4).coerceIn(0, 4)) }
     var showSeconds by remember { mutableStateOf(prefs.getBoolean("show_seconds", true)) }
     var use24Hour by remember { mutableStateOf(prefs.getBoolean("use_24_hour", true)) }
+    var showBatteryWidget by remember { mutableStateOf(prefs.getBoolean("show_battery_widget", true)) }
+    var showAnalogClockWidget by remember { mutableStateOf(prefs.getBoolean("show_analog_clock_widget", true)) }
     var favoritePackages by remember { mutableStateOf(prefs.getStringSet("favorite_packages", emptySet()).orEmpty().toSet()) }
     var favoritesOnly by remember { mutableStateOf(false) }
     var sortDescending by remember { mutableStateOf(false) }
@@ -108,7 +110,8 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
             .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
-            .putBoolean("use_24_hour", use24Hour).apply()
+            .putBoolean("use_24_hour", use24Hour).putBoolean("show_battery_widget", showBatteryWidget)
+            .putBoolean("show_analog_clock_widget", showAnalogClockWidget).apply()
     }
     val accents = listOf(Cyan, Violet, Lime, Amber)
     val accent = accents[accentIndex]
@@ -140,7 +143,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
@@ -150,14 +153,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritePackages, { pkg -> favoritePackages = if (pkg in favoritePackages) favoritePackages - pkg else favoritePackages + pkg },
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it }
                 )
-                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -184,14 +187,16 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
                     if (seconds.isNotEmpty()) Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
                 }
                 Text(date, color = TextMuted, fontSize = 12.sp)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
-                    Text(if (battery >= 0) "$battery%" else "Tidak tersedia", color = accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                if (showBatteryWidget) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+                        Text(if (battery >= 0) "$battery%" else "Tidak tersedia", color = accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    LinearProgressIndicator(progress = { if (battery >= 0) battery / 100f else 0f }, modifier = Modifier.fillMaxWidth().height(3.dp), color = accent, trackColor = PanelAlt)
+                    HorizontalDivider(color = Color(0xFF263348))
                 }
-                LinearProgressIndicator(progress = { if (battery >= 0) battery / 100f else 0f }, modifier = Modifier.fillMaxWidth().height(3.dp), color = accent, trackColor = PanelAlt)
-                HorizontalDivider(color = Color(0xFF263348))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (showAnalogClockWidget) Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         AnalogClock(Modifier.size(100.dp).clickable(onClick = onClock), clockFaceIndex)
                         Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
@@ -335,7 +340,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -372,6 +377,20 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
                 Text("Tampilkan atau sembunyikan detik", color = TextMuted, fontSize = 11.sp)
             }
             Switch(checked = showSeconds, onCheckedChange = onShowSeconds, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Widget baterai", color = TextMain, fontWeight = FontWeight.Medium)
+                Text("Tampilkan indikator baterai di beranda", color = TextMuted, fontSize = 11.sp)
+            }
+            Switch(checked = showBatteryWidget, onCheckedChange = onShowBatteryWidget, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Jam analog di beranda", color = TextMain, fontWeight = FontWeight.Medium)
+                Text("Tampilkan atau sembunyikan jam analog", color = TextMuted, fontSize = 11.sp)
+            }
+            Switch(checked = showAnalogClockWidget, onCheckedChange = onShowAnalogClockWidget, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
         }
         Text("DESAIN JAM ANALOG", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
