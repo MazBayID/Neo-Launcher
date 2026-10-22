@@ -133,6 +133,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Ketuk shortcut favorit langsung membuka aplikasi yang dipilih.
 - [x] Label build beranda diselaraskan ke v0.10.8.
 
+## Batch v0.10.9
+- [x] Transparansi kartu aplikasi di app drawer dapat diatur dari 35% hingga 100%.
+- [x] Preferensi transparansi kartu aplikasi disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.10.9.
+
 ## Backlog fitur
 
 ### Home & personalisasi
