@@ -2,7 +2,7 @@
 
 Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedia. Fitur yang membutuhkan izin, API eksternal, atau dukungan versi Android akan diimplementasikan dengan fallback dan pengaturan privasi.
 
-## Batch awal yang sedang masuk ke build 0.3.0
+## Fitur yang sudah diterapkan pada batch 0.3.0–0.4.0
 - [x] Filter alfabet aplikasi termasuk kategori `#` untuk nama yang tidak diawali huruf.
 - [x] Panel pengaturan dapat digulir di layar kecil.
 - [x] Preferensi aksen dan ukuran ikon tetap disimpan.
@@ -39,7 +39,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 22. [ ] Pencarian fuzzy
 
 ### Widget waktu
-23. [ ] Pilihan format tanggal
+23. [x] Pilihan format tanggal
 24. [ ] Zona waktu kedua
 25. [ ] Jam dunia beberapa kota
 26. [ ] Alarm berikutnya
@@ -140,7 +140,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 107. [ ] Mode hemat sumber daya
 108. [ ] Muat ikon secara efisien
 109. [x] Penanganan daftar aplikasi kosong
-110. [ ] Penanganan aplikasi yang tidak bisa dibuka
+110. [x] Penanganan aplikasi yang tidak bisa dibuka
 
 ### Integrasi & pemeliharaan
 111. [ ] Shortcut halaman sistem Android
