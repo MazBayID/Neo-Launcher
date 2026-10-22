@@ -118,6 +118,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi ketebalan jarum disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.10.5.
 
+## Batch v0.10.6
+- [x] Panjang jarum jam analog dapat disesuaikan dari 70% hingga 120%.
+- [x] Preferensi panjang jarum disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.10.6.
+
 ## Backlog fitur
 
 ### Home & personalisasi
