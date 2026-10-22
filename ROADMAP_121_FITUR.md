@@ -2,9 +2,14 @@
 
 Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedia. Fitur yang membutuhkan izin, API eksternal, atau dukungan versi Android akan diimplementasikan dengan fallback dan pengaturan privasi.
 
-## Fitur yang sudah diterapkan pada batch 0.3.0–0.4.0
+## Fitur yang sudah diterapkan pada batch 0.3.0–0.5.0
 - [x] Filter alfabet aplikasi termasuk kategori `#` untuk nama yang tidak diawali huruf.
+- [x] Hapus cepat pada kolom pencarian.
+- [x] Indikator visual huruf alfabet yang dipilih dan ketuk ulang untuk membatalkan filter.
+- [x] Aksi hapus filter pada hasil kosong.
 - [x] Panel pengaturan dapat digulir di layar kecil.
+- [x] Beranda dapat digulir pada layar pendek.
+- [x] Pesan fallback untuk aplikasi jam, kalender, dan Pengaturan Android yang tidak tersedia.
 - [x] Preferensi aksen dan ukuran ikon tetap disimpan.
 - [x] Pilihan wajah jam analog (5 desain) disimpan.
 - [x] Format jam 12/24 jam.
