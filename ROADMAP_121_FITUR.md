@@ -78,6 +78,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi indeks alfabet disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.9.7.
 
+## Batch v0.9.8
+- [x] Pilihan urutan aplikasi A–Z/Z–A disimpan lokal dan dipulihkan saat launcher dibuka.
+- [x] Indeks alfabet A–Z/# dapat ditampilkan atau disembunyikan dari app drawer.
+- [x] Label build beranda diselaraskan ke v0.9.8.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -97,7 +102,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Opsi tampil/sembunyi indeks alfabet A–Z/# (v0.9.7)
 12. [x] Favorit aplikasi
 13. [ ] Bagian aplikasi terbaru
-14. [x] Urutkan A–Z/Z–A
+14. [x] Urutkan A–Z/Z–A (pilihan tersimpan sejak v0.9.8)
 15. [ ] Urutkan berdasarkan terakhir dipakai
 16. [x] Filter aplikasi sistem (v0.7.0)
 17. [ ] Sembunyikan aplikasi pilihan
