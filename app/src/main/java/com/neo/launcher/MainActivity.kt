@@ -14,6 +14,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -109,7 +111,17 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                 if (label.isBlank() || pkg == "com.neo.launcher") null else InstalledApp(label, pkg)
             }.distinctBy { it.packageName }.sortedBy { it.label.lowercase(Locale.getDefault()) }
     }
-    val filtered = remember(apps, search, selectedLetter) { apps.filter { (selectedLetter == null || it.label.trim().firstOrNull()?.uppercaseChar() == selectedLetter) && it.label.contains(search.trim(), true) } }
+    val filtered = remember(apps, search, selectedLetter) {
+        apps.filter { app ->
+            val first = app.label.trim().firstOrNull()?.uppercaseChar()
+            val matchesLetter = when (selectedLetter) {
+                null -> true
+                '#' -> first == null || !first.isLetter()
+                else -> first == selectedLetter
+            }
+            matchesLetter && app.label.contains(search.trim(), true)
+        }
+    }
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
@@ -270,7 +282,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             Column(Modifier.width(24.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
                 ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#").forEach { letter ->
                     Text(letter.toString(), color = accent, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onLetter(if (letter == '#') null else letter) })
+                        modifier = Modifier.clickable { onLetter(letter) })
                 }
             }
         }
@@ -287,7 +299,7 @@ private fun batteryPercent(context: Context): Int {
 @Composable
 private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("NEO CONTROL", color = accents[accentIndex], fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
