@@ -57,6 +57,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi tampilan tanggal disimpan otomatis dan dipulihkan saat aplikasi dibuka.
 - [x] Label build beranda diselaraskan ke v0.9.3.
 
+## Batch v0.9.4
+- [x] Ukuran jam digital di beranda dapat disesuaikan dari 80% hingga 140%.
+- [x] Preferensi ukuran jam disimpan lokal dan dipulihkan saat launcher dibuka.
+- [x] Label build beranda diselaraskan ke v0.9.4.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -92,7 +97,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 26. [ ] Alarm berikutnya
 27. [ ] Hitung mundur
 28. [ ] Stopwatch ringkas
-29. [ ] Tema jam digital
+29. [x] Ukuran jam digital dapat disesuaikan (v0.9.4)
 30. [ ] Warna jarum jam
 31. [ ] Ketebalan jarum
 32. [x] Tampilkan/sembunyikan tanggal di widget (v0.9.3)
