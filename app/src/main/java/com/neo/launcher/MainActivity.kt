@@ -362,8 +362,32 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                         selectedAppForActions = null
                     }) { Text(if (selectedApp.packageName in favoritePackages) "HAPUS FAVORIT" else "JADIKAN FAVORIT") }
                     TextButton(onClick = {
+                        val packageUri = Uri.parse("package:" + selectedApp.packageName)
+                        val uninstallIntent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                            data = packageUri
+                            putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        val deleteIntent = Intent(Intent.ACTION_DELETE, packageUri).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
                         selectedAppForActions = null
-                        runCatching { context.startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:" + selectedApp.packageName))) }
+                        val launched = runCatching {
+                            context.startActivity(uninstallIntent)
+                        }.recoverCatching {
+                            context.startActivity(deleteIntent)
+                        }
+                        if (launched.isFailure) {
+                            Toast.makeText(context, "Konfirmasi copot tidak tersedia. Membuka info aplikasi.", Toast.LENGTH_LONG).show()
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }.onFailure {
+                                Toast.makeText(context, "Info aplikasi juga tidak dapat dibuka.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }) { Text("COPOT") }
                 }
             },
