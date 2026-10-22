@@ -408,6 +408,12 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
     val drawerPrefs = remember { context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
     var recentPackages by remember { mutableStateOf(drawerPrefs.getString("recent_packages", "").orEmpty().split("|").filter { it.isNotBlank() }) }
     var recentOnly by remember { mutableStateOf(false) }
+    var hiddenPackages by remember { mutableStateOf(drawerPrefs.getString("hidden_packages", "").orEmpty().split("|").filter { it.isNotBlank() }.toSet()) }
+    var showHiddenOnly by remember { mutableStateOf(false) }
+    fun toggleHidden(packageName: String) {
+        hiddenPackages = if (packageName in hiddenPackages) hiddenPackages - packageName else hiddenPackages + packageName
+        drawerPrefs.edit().putString("hidden_packages", hiddenPackages.joinToString("|")).apply()
+    }
     fun launchAndRecord(packageName: String) {
         recentPackages = (listOf(packageName) + recentPackages.filterNot { it == packageName }).take(12)
         drawerPrefs.edit().putString("recent_packages", recentPackages.joinToString("|")).apply()
@@ -431,6 +437,10 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                         onToggleFavorite(selectedApp.packageName)
                         selectedAppForActions = null
                     }) { Text(if (selectedApp.packageName in favoritePackages) "HAPUS FAVORIT" else "JADIKAN FAVORIT") }
+                    TextButton(onClick = {
+                        toggleHidden(selectedApp.packageName)
+                        selectedAppForActions = null
+                    }) { Text(if (selectedApp.packageName in hiddenPackages) "TAMPILKAN" else "SEMBUNYIKAN") }
                     TextButton(onClick = {
                         val packageUri = Uri.parse("package:" + selectedApp.packageName)
                         val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
@@ -482,7 +492,11 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
     var gridMode by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("app_drawer_grid", false)) }
     var gridColumns by remember { mutableIntStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getInt("app_drawer_columns", 2).coerceIn(2, 4)) }
     var showAlphabetIndex by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("show_alphabet_index", true)) }
-    val visibleApps = (if (recentOnly) apps.sortedBy { app -> recentPackages.indexOf(app.packageName).let { if (it < 0) Int.MAX_VALUE else it } } else apps).filter { (!hideSystemApps || !it.isSystemApp) && (!recentOnly || it.packageName in recentPackages) }
+    val visibleApps = (if (recentOnly) apps.sortedBy { app -> recentPackages.indexOf(app.packageName).let { if (it < 0) Int.MAX_VALUE else it } } else apps).filter {
+        (!hideSystemApps || !it.isSystemApp) &&
+        (!recentOnly || it.packageName in recentPackages) &&
+        if (showHiddenOnly) it.packageName in hiddenPackages else it.packageName !in hiddenPackages
+    }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -508,6 +522,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = favoritesOnly, onClick = { onFavoritesOnly(!favoritesOnly) }, label = { Text("★ Favorit") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            FilterChip(selected = showHiddenOnly, onClick = { showHiddenOnly = !showHiddenOnly; if (showHiddenOnly) { onFavoritesOnly(false); onSearch(""); onLetter(null); recentOnly = false } }, label = { Text(if (showHiddenOnly) "Aplikasi tersembunyi (${hiddenPackages.size})" else "Kelola tersembunyi (${hiddenPackages.size})") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = fuzzySearch, onClick = { onFuzzySearch(!fuzzySearch) }, label = { Text(if (fuzzySearch) "Pencarian fuzzy" else "Pencarian normal") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = hideSystemApps, onClick = { onHideSystemApps(!hideSystemApps) }, label = { Text(if (hideSystemApps) "Sistem: disembunyikan" else "Aplikasi sistem") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
