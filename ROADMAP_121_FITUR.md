@@ -15,13 +15,20 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Format jam 12/24 jam.
 - [x] Tampilkan/sembunyikan detik.
 
+## Perbaikan tambahan v0.7.1
+- [x] Jumlah aplikasi pada drawer mengikuti filter aplikasi sistem.
+- [x] Pesan kosong muncul ketika filter menyisakan nol aplikasi.
+- [x] Chip filter dapat digulir horizontal agar tidak memaksa semua kontrol muat di layar kecil.
+- [x] Tombol RESET membersihkan pencarian, huruf alfabet, dan filter favorit.
+- [ ] BUG-001: tombol COPOT belum membuka konfirmasi pencopotan pada perangkat penguji; sengaja ditunda untuk batch berikutnya.
+
 ## Backlog fitur
 
 ### Home & personalisasi
 1. [ ] Pilihan layout beranda
 2. [ ] Grid ikon yang dapat diatur
 3. [ ] Ukuran ikon terpisah untuk beranda
-4. [ ] Label ikon dapat disembunyikan
+4. [x] Label ikon dapat disembunyikan (v0.7.0)
 5. [ ] Warna teks ikon
 6. [ ] Transparansi kartu
 7. [ ] Efek glow aksen
@@ -35,7 +42,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 13. [ ] Bagian aplikasi terbaru
 14. [x] Urutkan A–Z/Z–A
 15. [ ] Urutkan berdasarkan terakhir dipakai
-16. [ ] Filter aplikasi sistem
+16. [x] Filter aplikasi sistem (v0.7.0)
 17. [ ] Sembunyikan aplikasi pilihan
 18. [ ] Kunci aplikasi dengan autentikasi
 19. [ ] Grup aplikasi berdasarkan kategori
