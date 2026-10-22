@@ -37,6 +37,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi warna label disimpan lokal.
 - [x] Label build beranda diperbarui ke v0.8.1.
 
+## Batch v0.9.0
+- [x] Ukuran teks label aplikasi dapat diatur dari 80% hingga 140%.
+- [x] Ukuran teks label disimpan lokal dan dipulihkan saat launcher dibuka.
+- [x] Label build beranda diselaraskan ke v0.9.0.
+
 ## Backlog fitur
 
 ### Home & personalisasi
