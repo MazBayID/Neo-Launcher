@@ -294,7 +294,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     if (showAnalogClockWidget) Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        AnalogClock(Modifier.size(100.dp * analogClockScale).clickable(onClick = onClock), clockFaceIndex, handStyleIndex, handThicknessScale, handLengthScale)
+                        AnalogClock(Modifier.size(100.dp * analogClockScale).clickable(onClick = onClock), clockFaceIndex, handStyleIndex, handThicknessScale, handLengthScale, accent)
                         Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -346,7 +346,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
 }
 
 @Composable
-private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4, handStyleIndex: Int = 0, handThicknessScale: Float = 1f, handLengthScale: Float = 1f) {
+private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4, handStyleIndex: Int = 0, handThicknessScale: Float = 1f, handLengthScale: Float = 1f, accent: Color = Cyan) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1000) } }
     val c = remember(now) { java.util.Calendar.getInstance().apply { timeInMillis = now } }
@@ -383,6 +383,7 @@ private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4, 
                 1 -> Triple(Color(0xFFFFC46B), Color(0xFFFFC46B), Color(0xFFFFC46B))
                 2 -> Triple(Color(0xFFB69CFF), Color(0xFF54E6E0), Color(0xFFFF8D79))
                 3 -> Triple(Color(0xFF070B14), Color(0xFF070B14), Color(0xFF070B14))
+                4 -> Triple(accent, accent, accent)
                 else -> Triple(TextMain, Cyan, Color(0xFFFF8D79))
             }
             val handWidths = when (handStyleIndex) {
@@ -800,7 +801,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
         Text("GAYA JARUM JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Text("Pilih warna dan ketebalan jarum analog", color = TextMuted, fontSize = 12.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            listOf("Neo", "Emas", "Neon", "Gelap").forEachIndexed { index, label ->
+            listOf("Neo", "Emas", "Neon", "Gelap", "Aksen").forEachIndexed { index, label ->
                 Surface(
                     color = if (handStyleIndex == index) accents[accentIndex].copy(alpha = 0.2f) else Panel,
                     shape = RoundedCornerShape(10.dp),
