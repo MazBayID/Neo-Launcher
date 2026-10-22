@@ -608,6 +608,13 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
+                Text("Widget baterai", color = TextMain, fontWeight = FontWeight.Medium)
+                Text("Tampilkan indikator baterai di beranda", color = TextMuted, fontSize = 11.sp)
+            }
+            Switch(checked = showBatteryWidget, onCheckedChange = onShowBatteryWidget, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
                 Text("Tanggal di widget jam", color = TextMain, fontWeight = FontWeight.Medium)
                 Text("Tampilkan atau sembunyikan tanggal di bawah jam digital", color = TextMuted, fontSize = 11.sp)
             }
