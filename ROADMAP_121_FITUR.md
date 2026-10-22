@@ -26,9 +26,9 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 11. [ ] Mode minimalis
 
 ### App drawer
-12. [ ] Favorit aplikasi
+12. [x] Favorit aplikasi
 13. [ ] Bagian aplikasi terbaru
-14. [ ] Urutkan A–Z/Z–A
+14. [x] Urutkan A–Z/Z–A
 15. [ ] Urutkan berdasarkan terakhir dipakai
 16. [ ] Filter aplikasi sistem
 17. [ ] Sembunyikan aplikasi pilihan
@@ -95,7 +95,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 68. [ ] Geser ke atas untuk drawer
 69. [ ] Ketuk dua kali untuk layar/aksi yang didukung
 70. [ ] Gestur beranda yang dapat dipetakan
-71. [ ] Tombol kembali konsisten
+71. [x] Tombol kembali konsisten
 72. [ ] Dukungan keyboard fisik
 73. [ ] Navigasi aksesibel
 74. [ ] Umpan balik haptik opsional
@@ -139,7 +139,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 106. [ ] Target sentuh lebih besar
 107. [ ] Mode hemat sumber daya
 108. [ ] Muat ikon secara efisien
-109. [ ] Penanganan daftar aplikasi kosong
+109. [x] Penanganan daftar aplikasi kosong
 110. [ ] Penanganan aplikasi yang tidak bisa dibuka
 
 ### Integrasi & pemeliharaan
