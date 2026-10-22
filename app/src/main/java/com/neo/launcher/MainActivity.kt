@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.content.Context
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.BatteryManager
 import android.widget.ImageView
 import android.widget.Toast
@@ -16,6 +17,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
@@ -67,12 +69,29 @@ class MainActivity : ComponentActivity() {
         setContent { NeoLauncherApp(packageManager, { packageName -> launchPackage(packageName) }, { openAndroidSettings() }, { openCalendar() }, { openClock() }) }
     }
     private fun openClock() {
-        val clockIntent = Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.APP_CLOCK")
-        runCatching { startActivity(clockIntent) }.recoverCatching {
-            startActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS))
-        }.onFailure {
-            Toast.makeText(this, "Aplikasi jam tidak tersedia", Toast.LENGTH_SHORT).show()
+        // OEM clock apps do not always register CATEGORY_APP_CLOCK.
+        val clockApp = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            .mapNotNull { info ->
+                val label = runCatching { packageManager.getApplicationLabel(info).toString() }.getOrDefault("")
+                if (label.contains("clock", true) || label.contains("jam", true) || label.contains("alarm", true)) {
+                    packageManager.getLaunchIntentForPackage(info.packageName)
+                } else null
+            }.firstOrNull()
+        val intents = listOfNotNull(
+            clockApp,
+            Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS),
+            Intent(android.provider.AlarmClock.ACTION_SET_ALARM),
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CLOCK)
+        )
+        for (intent in intents) {
+            try {
+                startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                return
+            } catch (_: Exception) {
+                // Continue to the next supported clock entry point.
+            }
         }
+        Toast.makeText(this, "Aplikasi jam tidak ditemukan. Periksa aplikasi Jam di perangkat.", Toast.LENGTH_LONG).show()
     }
     private fun openAndroidSettings() {
         runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) }.onFailure {
@@ -119,6 +138,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var dateFormatIndex by remember { mutableIntStateOf(prefs.getInt("date_format", 0).coerceIn(0, 2)) }
     var showBatteryWidget by remember { mutableStateOf(prefs.getBoolean("show_battery_widget", true)) }
     var showAnalogClockWidget by remember { mutableStateOf(prefs.getBoolean("show_analog_clock_widget", true)) }
+    var handStyleIndex by remember { mutableIntStateOf(prefs.getInt("clock_hand_style", 0).coerceIn(0, 3)) }
     var favoritePackages by remember { mutableStateOf(prefs.getStringSet("favorite_packages", emptySet()).orEmpty().toSet()) }
     var favoritesOnly by remember { mutableStateOf(false) }
     var sortDescending by remember { mutableStateOf(false) }
@@ -126,12 +146,13 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
         if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
     }
     LaunchedEffect(favoritePackages) { prefs.edit().putStringSet("favorite_packages", favoritePackages.toSet()).apply() }
-    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget) {
+    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
             .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
             .putBoolean("use_24_hour", use24Hour).putInt("date_format", dateFormatIndex)
             .putBoolean("show_battery_widget", showBatteryWidget)
-            .putBoolean("show_analog_clock_widget", showAnalogClockWidget).apply()
+            .putBoolean("show_analog_clock_widget", showAnalogClockWidget)
+            .putInt("clock_hand_style", handStyleIndex).apply()
     }
     val accents = listOf(Cyan, Violet, Lime, Amber)
     val accent = accents[accentIndex]
@@ -171,7 +192,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, handStyleIndex, { handStyleIndex = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
@@ -181,14 +202,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritePackages, { pkg -> favoritePackages = if (pkg in favoritePackages) favoritePackages - pkg else favoritePackages + pkg },
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it }
                 )
-                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, handStyleIndex, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, handStyleIndex: Int, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -226,7 +247,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                     if (showAnalogClockWidget) Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        AnalogClock(Modifier.size(100.dp).clickable(onClick = onClock), clockFaceIndex)
+                        AnalogClock(Modifier.size(100.dp).clickable(onClick = onClock), clockFaceIndex, handStyleIndex)
                         Text("ANALOG", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -260,12 +281,12 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
             }
         }
         Spacer(Modifier.height(4.dp))
-        Text("NEO LAUNCHER • BUILD 0.5.1", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text("NEO LAUNCHER • BUILD 0.6.0", color = Color(0xFF526176), fontSize = 9.sp, letterSpacing = 1.5.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
 @Composable
-private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4) {
+private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4, handStyleIndex: Int = 0) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1000) } }
     val c = remember(now) { java.util.Calendar.getInstance().apply { timeInMillis = now } }
@@ -298,16 +319,59 @@ private fun AnalogClock(modifier: Modifier = Modifier, clockFaceIndex: Int = 4) 
                     cap = StrokeCap.Round
                 )
             }
-            hand(hour * 30.0, r * 0.48f, 3.dp.toPx(), TextMain)
-            hand(min * 6.0, r * 0.67f, 2.dp.toPx(), Cyan)
-            hand(sec * 6.0, r * 0.77f, 1.dp.toPx(), Color(0xFFFF8D79))
-            drawCircle(Cyan, 3.dp.toPx(), center)
+            val handColors = when (handStyleIndex) {
+                1 -> Triple(Color(0xFFFFC46B), Color(0xFFFFC46B), Color(0xFFFFC46B))
+                2 -> Triple(Color(0xFFB69CFF), Color(0xFF54E6E0), Color(0xFFFF8D79))
+                3 -> Triple(Color(0xFF070B14), Color(0xFF070B14), Color(0xFF070B14))
+                else -> Triple(TextMain, Cyan, Color(0xFFFF8D79))
+            }
+            val handWidths = when (handStyleIndex) {
+                1 -> Triple(4.dp.toPx(), 3.dp.toPx(), 1.5.dp.toPx())
+                2 -> Triple(2.dp.toPx(), 2.dp.toPx(), 1.dp.toPx())
+                3 -> Triple(4.dp.toPx(), 2.5.dp.toPx(), 1.dp.toPx())
+                else -> Triple(3.dp.toPx(), 2.dp.toPx(), 1.dp.toPx())
+            }
+            hand(hour * 30.0, r * if (handStyleIndex == 2) 0.43f else 0.48f, handWidths.first, handColors.first)
+            hand(min * 6.0, r * if (handStyleIndex == 2) 0.73f else 0.67f, handWidths.second, handColors.second)
+            hand(sec * 6.0, r * 0.77f, handWidths.third, handColors.third)
+            drawCircle(handColors.second, 3.dp.toPx(), center)
         }
     }
 }
 
 @Composable
 private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (String) -> Unit, onBack: () -> Unit, onLaunch: (String) -> Unit, accent: Color, iconScale: Float, selectedLetter: Char?, onLetter: (Char?) -> Unit, favoritePackages: Set<String>, onToggleFavorite: (String) -> Unit, favoritesOnly: Boolean, onFavoritesOnly: (Boolean) -> Unit, sortDescending: Boolean, onSortDescending: (Boolean) -> Unit) {
+    var selectedAppForActions by remember { mutableStateOf<InstalledApp?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    if (selectedAppForActions != null) {
+        val selectedApp = selectedAppForActions!!
+        AlertDialog(
+            onDismissRequest = { selectedAppForActions = null },
+            title = { Text(selectedApp.label) },
+            text = { Text("Pilih tindakan untuk aplikasi ini.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedAppForActions = null
+                    runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + selectedApp.packageName))) }
+                }) { Text("INFO APLIKASI") }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        onToggleFavorite(selectedApp.packageName)
+                        selectedAppForActions = null
+                    }) { Text(if (selectedApp.packageName in favoritePackages) "HAPUS FAVORIT" else "JADIKAN FAVORIT") }
+                    TextButton(onClick = {
+                        selectedAppForActions = null
+                        runCatching { context.startActivity(Intent(Intent.ACTION_DELETE, Uri.parse("package:" + selectedApp.packageName))) }
+                    }) { Text("COPOT") }
+                }
+            },
+            containerColor = Panel,
+            titleContentColor = TextMain,
+            textContentColor = TextMuted
+        )
+    }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -342,7 +406,10 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             LazyColumn(state = listState, modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 items(apps, key = { it.packageName }) { app ->
-                    Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().clickable { onLaunch(app.packageName) }) {
+                    Surface(color = Panel, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().combinedClickable(
+                        onClick = { onLaunch(app.packageName) },
+                        onLongClick = { selectedAppForActions = app }
+                    )) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             AndroidView(factory = { ctx -> ImageView(ctx).apply { scaleType = ImageView.ScaleType.FIT_CENTER; setImageDrawable(runCatching { ctx.packageManager.getApplicationIcon(app.packageName) }.getOrNull()) } },
                                 modifier = Modifier.size((28 * iconScale).dp))
@@ -381,7 +448,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, handStyleIndex: Int, onHandStyle: (Int) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -455,6 +522,21 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
                         }), contentDescription = "Desain jam ${index + 1}", modifier = Modifier.size(30.dp))
                         Text("${index + 1}", color = accents[accentIndex], fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
+                }
+            }
+        }
+        Text("GAYA JARUM JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Text("Pilih warna dan ketebalan jarum analog", color = TextMuted, fontSize = 12.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            listOf("Neo", "Emas", "Neon", "Gelap").forEachIndexed { index, label ->
+                Surface(
+                    color = if (handStyleIndex == index) accents[accentIndex].copy(alpha = 0.2f) else Panel,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f).clickable { onHandStyle(index) },
+                    border = androidx.compose.foundation.BorderStroke(if (handStyleIndex == index) 1.dp else 0.dp, accents[accentIndex])
+                ) {
+                    Text(label, color = if (handStyleIndex == index) accents[accentIndex] else TextMuted, fontSize = 10.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 12.dp))
                 }
             }
         }
