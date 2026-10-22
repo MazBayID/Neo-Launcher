@@ -118,7 +118,8 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     LaunchedEffect(Unit) {
         while (true) { now = System.currentTimeMillis(); delay(1000) }
     }
-    val time = remember(now, use24Hour) { SimpleDateFormat(if (use24Hour) "HH:mm" else "h:mm a", Locale.getDefault()).format(Date(now)) }
+    val time = remember(now, use24Hour) { SimpleDateFormat(if (use24Hour) "HH:mm" else "h:mm", Locale.getDefault()).format(Date(now)) }
+    val period = remember(now, use24Hour) { if (use24Hour) "" else SimpleDateFormat("a", Locale.getDefault()).format(Date(now)) }
     val seconds = remember(now, showSeconds) { if (showSeconds) SimpleDateFormat("ss", Locale.getDefault()).format(Date(now)) else "" }
     val date = remember(now) { SimpleDateFormat("EEEE, d MMMM yyyy", Locale("id", "ID")).format(Date(now)) }
     val apps = remember(packageManager) {
@@ -153,14 +154,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
                     favoritePackages, { pkg -> favoritePackages = if (pkg in favoritePackages) favoritePackages - pkg else favoritePackages + pkg },
                     favoritesOnly, { favoritesOnly = it }, sortDescending, { sortDescending = it }
                 )
-                else -> HomeScreen(time, seconds, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, { showSettings = true }, onCalendar, onClock) { showApps = true }
+                else -> HomeScreen(time, seconds, period, date, apps.size, accent, batteryPercent(appContext), clockFaceIndex, showBatteryWidget, showAnalogClockWidget, { showSettings = true }, onCalendar, onClock) { showApps = true }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(time: String, seconds: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
+private fun HomeScreen(time: String, seconds: String, period: String, date: String, appCount: Int, accent: Color, battery: Int, clockFaceIndex: Int, showBatteryWidget: Boolean, showAnalogClockWidget: Boolean, onSettings: () -> Unit, onCalendar: () -> Unit, onClock: () -> Unit, onOpenApps: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Night).statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(17.dp)
@@ -179,12 +180,13 @@ private fun HomeScreen(time: String, seconds: String, date: String, appCount: In
         Surface(color = Panel, shape = RoundedCornerShape(28.dp), modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Icon(Icons.Default.Timelapse, contentDescription = null, tint = Cyan, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Timelapse, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
                     Text("LOCAL TIME", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(time, color = TextMain, fontSize = 58.sp, fontWeight = FontWeight.Light, letterSpacing = (-2).sp, modifier = Modifier.clickable(onClick = onClock))
                     if (seconds.isNotEmpty()) Text(":$seconds", color = accent, fontSize = 20.sp, modifier = Modifier.padding(bottom = 9.dp))
+                    if (period.isNotEmpty()) Text(period, color = accent, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 5.dp, bottom = 13.dp))
                 }
                 Text(date, color = TextMuted, fontSize = 12.sp)
                 if (showBatteryWidget) {
@@ -283,7 +285,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("APP LIBRARY", color = accent, fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
-                Text("${apps.size} aplikasi ditemukan${selectedLetter?.let { " • Huruf $it" } ?: ""}", color = TextMuted, fontSize = 12.sp)
+                Text("${apps.size} aplikasi • ${favoritePackages.size} favorit${selectedLetter?.let { " • Huruf $it" } ?: ""}", color = TextMuted, fontSize = 12.sp)
             }
             TextButton(onClick = onBack) { Text("BERANDA", color = accent, fontSize = 10.sp) }
         }
