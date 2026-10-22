@@ -153,6 +153,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Subteks mendukung beberapa baris dan disimpan lokal.
 - [x] Label build beranda diselaraskan ke v0.11.2.
 
+## Batch v0.11.3
+- [x] Warna subteks utama beranda dapat mengikuti warna aksen.
+- [x] Preferensi warna subteks disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.11.3.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -160,7 +165,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 2. [x] Grid ikon yang dapat diatur (2–4 kolom, v0.9.6)
 3. [ ] Ukuran ikon terpisah untuk beranda
 4. [x] Label ikon dapat disembunyikan (v0.7.0)
-5. [ ] Warna teks ikon
+5. [x] Warna teks ikon dan subteks beranda mengikuti aksen (v0.11.3)
 6. [x] Transparansi kartu (v0.9.9)
 7. [ ] Efek glow aksen
 8. [ ] Wallpaper dari galeri
