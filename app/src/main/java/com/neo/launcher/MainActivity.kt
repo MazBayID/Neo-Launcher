@@ -408,6 +408,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
     val drawerPrefs = remember { context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE) }
     var recentPackages by remember { mutableStateOf(drawerPrefs.getString("recent_packages", "").orEmpty().split("|").filter { it.isNotBlank() }) }
     var recentOnly by remember { mutableStateOf(false) }
+    var sortByRecent by remember { mutableStateOf(drawerPrefs.getBoolean("sort_by_recent", false)) }
     var hiddenPackages by remember { mutableStateOf(drawerPrefs.getString("hidden_packages", "").orEmpty().split("|").filter { it.isNotBlank() }.toSet()) }
     var showHiddenOnly by remember { mutableStateOf(false) }
     fun toggleHidden(packageName: String) {
@@ -492,7 +493,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
     var gridMode by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("app_drawer_grid", false)) }
     var gridColumns by remember { mutableIntStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getInt("app_drawer_columns", 2).coerceIn(2, 4)) }
     var showAlphabetIndex by remember { mutableStateOf(context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).getBoolean("show_alphabet_index", true)) }
-    val visibleApps = (if (recentOnly) apps.sortedBy { app -> recentPackages.indexOf(app.packageName).let { if (it < 0) Int.MAX_VALUE else it } } else apps).filter {
+    val visibleApps = (if (recentOnly || sortByRecent) apps.sortedBy { app -> recentPackages.indexOf(app.packageName).let { if (it < 0) Int.MAX_VALUE else it } } else apps).filter {
         (!hideSystemApps || !it.isSystemApp) &&
         (!recentOnly || it.packageName in recentPackages) &&
         if (showHiddenOnly) it.packageName in hiddenPackages else it.packageName !in hiddenPackages
@@ -527,6 +528,7 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
             FilterChip(selected = sortDescending, onClick = { onSortDescending(!sortDescending) }, label = { Text(if (sortDescending) "Z → A" else "A → Z") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = hideSystemApps, onClick = { onHideSystemApps(!hideSystemApps) }, label = { Text(if (hideSystemApps) "Sistem: disembunyikan" else "Aplikasi sistem") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             FilterChip(selected = recentOnly, onClick = { recentOnly = !recentOnly }, label = { Text("Baru dipakai") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
+            FilterChip(selected = sortByRecent, onClick = { sortByRecent = !sortByRecent; drawerPrefs.edit().putBoolean("sort_by_recent", sortByRecent).apply() }, label = { Text(if (sortByRecent) "Urutan terbaru" else "Urutkan terbaru") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             if (recentPackages.isNotEmpty()) TextButton(onClick = { recentPackages = emptyList(); drawerPrefs.edit().remove("recent_packages").apply(); recentOnly = false }) { Text("HAPUS RIWAYAT", color = accent, fontSize = 10.sp) }
             FilterChip(selected = gridMode, onClick = { gridMode = !gridMode; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putBoolean("app_drawer_grid", gridMode).apply() }, label = { Text(if (gridMode) "Tampilan: grid" else "Tampilan: daftar") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
             if (gridMode) FilterChip(selected = gridColumns > 2, onClick = { gridColumns = if (gridColumns >= 4) 2 else gridColumns + 1; context.getSharedPreferences("neo_launcher_preferences", Context.MODE_PRIVATE).edit().putInt("app_drawer_columns", gridColumns).apply() }, label = { Text("Kolom: $gridColumns") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = accent.copy(alpha = 0.2f), selectedLabelColor = accent))
