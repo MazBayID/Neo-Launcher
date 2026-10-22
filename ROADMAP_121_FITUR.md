@@ -42,6 +42,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Ukuran teks label disimpan lokal dan dipulihkan saat launcher dibuka.
 - [x] Label build beranda diselaraskan ke v0.9.0.
 
+## Batch v0.9.1
+- [x] Salam beranda dapat disembunyikan untuk tampilan lebih minimal.
+- [x] Pilihan salam beranda disimpan secara lokal.
+- [x] Label build beranda diselaraskan ke v0.9.1.
+
 ## Backlog fitur
 
 ### Home & personalisasi
