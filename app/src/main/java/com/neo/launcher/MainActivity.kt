@@ -363,29 +363,42 @@ private fun AppLibrary(apps: List<InstalledApp>, search: String, onSearch: (Stri
                     }) { Text(if (selectedApp.packageName in favoritePackages) "HAPUS FAVORIT" else "JADIKAN FAVORIT") }
                     TextButton(onClick = {
                         val packageUri = Uri.parse("package:" + selectedApp.packageName)
-                        val uninstallIntent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                        val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
                             data = packageUri
-                            putExtra(Intent.EXTRA_RETURN_RESULT, true)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
-                        val deleteIntent = Intent(Intent.ACTION_DELETE, packageUri).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        val alternateIntent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                            data = packageUri
                         }
-                        selectedAppForActions = null
-                        val launched = runCatching {
+
+                        // Jangan tutup dialog sebelum kita memastikan intent dapat dipanggil.
+                        val result = runCatching {
                             context.startActivity(uninstallIntent)
                         }.recoverCatching {
-                            context.startActivity(deleteIntent)
+                            context.startActivity(alternateIntent)
                         }
-                        if (launched.isFailure) {
-                            Toast.makeText(context, "Konfirmasi copot tidak tersedia. Membuka info aplikasi.", Toast.LENGTH_LONG).show()
+
+                        if (result.isSuccess) {
+                            selectedAppForActions = null
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Android tidak membuka konfirmasi copot. Membuka Info Aplikasi sebagai alternatif.",
+                                Toast.LENGTH_LONG
+                            ).show()
                             runCatching {
                                 context.startActivity(
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        packageUri
+                                    )
                                 )
+                                selectedAppForActions = null
                             }.onFailure {
-                                Toast.makeText(context, "Info aplikasi juga tidak dapat dibuka.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Gagal membuka pencopotan maupun Info Aplikasi.",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
                     }) { Text("COPOT") }
