@@ -103,6 +103,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var clockFaceIndex by remember { mutableIntStateOf(prefs.getInt("clock_face", 4).coerceIn(0, 4)) }
     var showSeconds by remember { mutableStateOf(prefs.getBoolean("show_seconds", true)) }
     var use24Hour by remember { mutableStateOf(prefs.getBoolean("use_24_hour", true)) }
+    var dateFormatIndex by remember { mutableIntStateOf(prefs.getInt("date_format", 0).coerceIn(0, 2)) }
     var showBatteryWidget by remember { mutableStateOf(prefs.getBoolean("show_battery_widget", true)) }
     var showAnalogClockWidget by remember { mutableStateOf(prefs.getBoolean("show_analog_clock_widget", true)) }
     var favoritePackages by remember { mutableStateOf(prefs.getStringSet("favorite_packages", emptySet()).orEmpty().toSet()) }
@@ -112,10 +113,11 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
         if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
     }
     LaunchedEffect(favoritePackages) { prefs.edit().putStringSet("favorite_packages", favoritePackages.toSet()).apply() }
-    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, showBatteryWidget, showAnalogClockWidget) {
+    LaunchedEffect(accentIndex, iconScale, clockFaceIndex, showSeconds, use24Hour, dateFormatIndex, showBatteryWidget, showAnalogClockWidget) {
         prefs.edit().putInt("accent_index", accentIndex).putFloat("icon_scale", iconScale)
             .putInt("clock_face", clockFaceIndex).putBoolean("show_seconds", showSeconds)
-            .putBoolean("use_24_hour", use24Hour).putBoolean("show_battery_widget", showBatteryWidget)
+            .putBoolean("use_24_hour", use24Hour).putInt("date_format", dateFormatIndex)
+            .putBoolean("show_battery_widget", showBatteryWidget)
             .putBoolean("show_analog_clock_widget", showAnalogClockWidget).apply()
     }
     val accents = listOf(Cyan, Violet, Lime, Amber)
@@ -126,7 +128,14 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     val time = remember(now, use24Hour) { SimpleDateFormat(if (use24Hour) "HH:mm" else "h:mm", Locale.getDefault()).format(Date(now)) }
     val period = remember(now, use24Hour) { if (use24Hour) "" else SimpleDateFormat("a", Locale.getDefault()).format(Date(now)) }
     val seconds = remember(now, showSeconds) { if (showSeconds) SimpleDateFormat("ss", Locale.getDefault()).format(Date(now)) else "" }
-    val date = remember(now) { SimpleDateFormat("EEEE, d MMMM yyyy", Locale("id", "ID")).format(Date(now)) }
+    val date = remember(now, dateFormatIndex) {
+        val pattern = when (dateFormatIndex) {
+            1 -> "EEE, d MMM yyyy"
+            2 -> "dd/MM/yyyy"
+            else -> "EEEE, d MMMM yyyy"
+        }
+        SimpleDateFormat(pattern, Locale("id", "ID")).format(Date(now))
+    }
     val apps = remember(packageManager) {
         packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
             .mapNotNull { info ->
@@ -149,7 +158,7 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = Night, surface = Panel, onSurface = TextMain)) {
         Surface(Modifier.fillMaxSize(), color = Night) {
             when {
-                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, { showSettings = false }, onSettings)
+                showSettings -> LauncherSettings(accentIndex, { accentIndex = it }, iconScale, { iconScale = it }, clockFaceIndex, { clockFaceIndex = it }, showSeconds, { showSeconds = it }, use24Hour, { use24Hour = it }, dateFormatIndex, { dateFormatIndex = it }, showBatteryWidget, { showBatteryWidget = it }, showAnalogClockWidget, { showAnalogClockWidget = it }, { showSettings = false }, onSettings)
                 showApps -> AppLibrary(
                     filtered.filter { !favoritesOnly || it.packageName in favoritePackages }
                         .let { list -> if (sortDescending) list.sortedByDescending { it.label.lowercase(Locale.getDefault()) } else list },
@@ -347,7 +356,7 @@ private fun batteryPercent(context: Context): Int {
 }
 
 @Composable
-private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
+private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScale: Float, onIconScale: (Float) -> Unit, clockFaceIndex: Int, onClockFace: (Int) -> Unit, showSeconds: Boolean, onShowSeconds: (Boolean) -> Unit, use24Hour: Boolean, onUse24Hour: (Boolean) -> Unit, dateFormatIndex: Int, onDateFormat: (Int) -> Unit, showBatteryWidget: Boolean, onShowBatteryWidget: (Boolean) -> Unit, showAnalogClockWidget: Boolean, onShowAnalogClockWidget: (Boolean) -> Unit, onBack: () -> Unit, onAndroidSettings: () -> Unit) {
     val accents = listOf(Cyan, Violet, Lime, Amber)
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -398,6 +407,14 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
                 Text("Tampilkan atau sembunyikan jam analog", color = TextMuted, fontSize = 11.sp)
             }
             Switch(checked = showAnalogClockWidget, onCheckedChange = onShowAnalogClockWidget, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
+        }
+        Text("FORMAT TANGGAL", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            listOf("Lengkap", "Singkat", "Angka").forEachIndexed { index, label ->
+                Surface(color = if (dateFormatIndex == index) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f).clickable { onDateFormat(index) }, border = androidx.compose.foundation.BorderStroke(if (dateFormatIndex == index) 1.dp else 0.dp, accents[accentIndex])) {
+                    Text(label, color = if (dateFormatIndex == index) accents[accentIndex] else TextMuted, fontSize = 11.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 12.dp))
+                }
+            }
         }
         Text("DESAIN JAM ANALOG", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
