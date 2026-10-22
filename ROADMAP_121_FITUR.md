@@ -179,6 +179,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Daftar aplikasi tersembunyi disimpan secara lokal.
 - [x] Label build beranda diselaraskan ke v0.11.7.
 
+## Batch v0.11.8
+- [x] Urutan aplikasi berdasarkan pemakaian terbaru dapat diaktifkan tanpa menyembunyikan aplikasi lain.
+- [x] Preferensi urutan terbaru disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.11.8.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -199,7 +204,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 12. [x] Favorit aplikasi
 13. [x] Bagian/filter aplikasi terbaru (v0.10.0)
 14. [x] Urutkan A–Z/Z–A (pilihan tersimpan sejak v0.9.8)
-15. [ ] Urutkan berdasarkan terakhir dipakai
+15. [x] Urutkan berdasarkan terakhir dipakai (v0.11.8)
 16. [x] Filter aplikasi sistem (v0.7.0)
 17. [x] Sembunyikan dan pulihkan aplikasi pilihan (v0.11.7)
 18. [ ] Kunci aplikasi dengan autentikasi
