@@ -103,6 +103,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Menghapus riwayat juga mematikan filter aplikasi terbaru.
 - [x] Label build beranda diselaraskan ke v0.10.2.
 
+## Batch v0.10.3
+- [x] Pencarian fuzzy opsional mendukung kecocokan huruf berurutan saat kata tidak cocok secara langsung.
+- [x] Pencarian normal tetap menjadi mode bawaan dan pilihan fuzzy disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.10.3.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -130,7 +135,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 19. [ ] Grup aplikasi berdasarkan kategori
 20. [x] Grid/daftar aplikasi (v0.9.5)
 21. [ ] Animasi drawer
-22. [ ] Pencarian fuzzy
+22. [x] Pencarian fuzzy (opsional, v0.10.3)
 
 ### Widget waktu
 - [x] Ukuran widget jam analog dapat disesuaikan (v0.10.1)
