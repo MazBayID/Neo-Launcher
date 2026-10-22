@@ -73,6 +73,11 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 - [x] Preferensi jumlah kolom disimpan lokal dan dipulihkan saat drawer dibuka.
 - [x] Label build beranda diselaraskan ke v0.9.6.
 
+## Batch v0.9.7
+- [x] Indeks alfabet A–Z/# di app drawer dapat ditampilkan atau disembunyikan.
+- [x] Preferensi indeks alfabet disimpan lokal.
+- [x] Label build beranda diselaraskan ke v0.9.7.
+
 ## Backlog fitur
 
 ### Home & personalisasi
@@ -89,6 +94,7 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 11. [ ] Mode minimalis
 
 ### App drawer
+- [x] Opsi tampil/sembunyi indeks alfabet A–Z/# (v0.9.7)
 12. [x] Favorit aplikasi
 13. [ ] Bagian aplikasi terbaru
 14. [x] Urutkan A–Z/Z–A
