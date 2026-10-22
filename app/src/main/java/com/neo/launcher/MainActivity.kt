@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
             clockApp,
             Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS),
             Intent(android.provider.AlarmClock.ACTION_SET_ALARM),
-            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CLOCK)
+            Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.APP_CLOCK")
         )
         for (intent in intents) {
             try {
