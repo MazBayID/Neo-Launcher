@@ -156,7 +156,8 @@ private fun NeoLauncherApp(packageManager: PackageManager, onLaunch: (String) ->
     var showGreeting by remember { mutableStateOf(prefs.getBoolean("show_greeting", true)) }
     var accentDigitalClock by remember { mutableStateOf(prefs.getBoolean("accent_digital_clock", false)) }
     var homeBackgroundIndex by remember { mutableIntStateOf(prefs.getInt("home_background", 0).coerceIn(0, 3)) }
-    var sortDescending by remember { mutableStateOf(false) }
+    var sortDescending by remember { mutableStateOf(prefs.getBoolean("sort_descending", false)) }
+    LaunchedEffect(sortDescending) { prefs.edit().putBoolean("sort_descending", sortDescending).apply() }
     BackHandler(enabled = showApps || showSettings) {
         if (showSettings) showSettings = false else { showApps = false; search = ""; selectedLetter = null; favoritesOnly = false }
     }
