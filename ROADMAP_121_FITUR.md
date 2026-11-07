@@ -334,6 +334,12 @@ Dokumen ini adalah backlog bertahap, bukan klaim bahwa semua fitur sudah tersedi
 
 ---
 
+## Batch v0.11.9
+- [x] Mengintegrasikan aset ikon fungsi ke bagian pengaturan launcher yang relevan.
+- [x] Menambahkan ikon visual untuk pengaturan ukuran ikon, drawer, latar, shortcut, label, jam, tanggal, baterai, cuaca (ilustrasi), dan pengaturan Android.
+- [x] Ikon dimuat berdasarkan nama resource agar pemetaan aset mudah diperluas tanpa mengubah perilaku fitur.
+- [x] Memperbarui label build ke v0.11.9.
+
 ## Gerbang kualitas sebelum rilis
 1. Build debug berhasil di GitHub Actions.
 2. Periksa crash dan referensi resource.
