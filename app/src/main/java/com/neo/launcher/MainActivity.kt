@@ -262,7 +262,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 Text("NEO", color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
                 Text("LAUNCHER SYSTEM", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
             }
-            FeatureAssetIcon("settings_gears", 25.dp).let { }\n            Box(Modifier.size(30.dp).clickable(onClick = onSettings), contentAlignment = Alignment.Center) { FeatureAssetIcon("settings_gears", 25.dp) }
+            Box(Modifier.size(30.dp).clickable(onClick = onSettings), contentAlignment = Alignment.Center) { FeatureAssetIcon("settings_gears", 25.dp) }
         }
         if (showGreeting) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(homeGreetingText, color = TextMuted, fontSize = 13.sp)
