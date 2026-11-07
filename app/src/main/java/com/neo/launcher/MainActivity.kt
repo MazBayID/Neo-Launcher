@@ -262,7 +262,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                 Text("NEO", color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
                 Text("LAUNCHER SYSTEM", color = TextMuted, fontSize = 10.sp, letterSpacing = 2.sp)
             }
-            Icon(Icons.Default.Settings, contentDescription = "Buka Pengaturan Neo", tint = TextMuted, modifier = Modifier.size(22.dp).clickable(onClick = onSettings).padding(1.dp))
+            FeatureAssetIcon("settings_gears", 25.dp).let { }\n            Box(Modifier.size(30.dp).clickable(onClick = onSettings), contentAlignment = Alignment.Center) { FeatureAssetIcon("settings_gears", 25.dp) }
         }
         if (showGreeting) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(homeGreetingText, color = TextMuted, fontSize = 13.sp)
@@ -287,7 +287,7 @@ private fun HomeScreen(time: String, seconds: String, period: String, date: Stri
                             context.startActivity(Intent(Settings.ACTION_SETTINGS))
                         }
                     }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(if (batteryCharging) "BATTERY • MENGISI" else "BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { FeatureAssetIcon("battery_icon", 17.dp); Text(if (batteryCharging) "BATTERY • MENGISI" else "BATTERY", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.2.sp) }
                         Text(if (battery >= 0) "$battery%" else "Tidak tersedia", color = accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
                     LinearProgressIndicator(progress = { if (battery >= 0) battery / 100f else 0f }, modifier = Modifier.fillMaxWidth().height(3.dp), color = accent, trackColor = PanelAlt)
@@ -620,6 +620,30 @@ private fun isBatteryCharging(context: Context): Boolean {
     }
 }
 
+
+@Composable
+private fun FeatureAssetIcon(name: String, size: androidx.compose.ui.unit.Dp = 22.dp) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val resourceId = remember(name) {
+        context.resources.getIdentifier(name, "drawable", context.packageName)
+    }
+    if (resourceId != 0) {
+        Image(
+            painter = painterResource(id = resourceId),
+            contentDescription = null,
+            modifier = Modifier.size(size)
+        )
+    }
+}
+
+@Composable
+private fun FeatureSectionHeader(title: String, iconName: String, accent: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+        FeatureAssetIcon(iconName, 25.dp)
+        Text(title, color = accent, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
 private fun batteryPercent(context: Context): Int {
     val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return -1
     val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
@@ -633,7 +657,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("NEO CONTROL", color = accents[accentIndex], fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { FeatureAssetIcon("settings_gears", 25.dp); Text("NEO CONTROL", color = accents[accentIndex], fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold) }
                 Text("Kustomisasi launcher", color = TextMain, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
             }
             TextButton(onClick = onBack) { Text("SELESAI", color = accents[accentIndex]) }
@@ -647,12 +671,12 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
         }
         HorizontalDivider(color = Color(0xFF263348))
-        Text("UKURAN IKON APLIKASI", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("UKURAN IKON APLIKASI", "ukuran_ikon", accents[accentIndex])
         Text("${(iconScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 22.sp)
         Slider(value = iconScale, onValueChange = onIconScale, valueRange = 0.8f..1.5f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("APP LIBRARY", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("APP LIBRARY", "gaya_drawer", accents[accentIndex])
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Tampilkan nama aplikasi", color = TextMain, fontWeight = FontWeight.Medium)
@@ -697,7 +721,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
             Switch(checked = accentDigitalClock, onCheckedChange = onAccentDigitalClock, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
         }
-        Text("LATAR BERANDA", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("LATAR BERANDA", "latar_kustom", accents[accentIndex])
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Neo", "Violet", "Teal", "Amber").forEachIndexed { index, label ->
                 val preview = when (index) { 1 -> Color(0xFF211638); 2 -> Color(0xFF082A2A); 3 -> Color(0xFF302014); else -> Night }
@@ -714,23 +738,23 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
             Switch(checked = accentAppLabels, onCheckedChange = onAccentAppLabels, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
         }
-        Text("JUMLAH SHORTCUT FAVORIT BERANDA", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("JUMLAH SHORTCUT FAVORIT BERANDA", "pintasan_ui", accents[accentIndex])
         Text("$homeFavoriteLimit aplikasi", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = homeFavoriteLimit.toFloat(), onValueChange = { onHomeFavoriteLimit(it.toInt().coerceIn(1, 6)) }, valueRange = 1f..6f, steps = 4, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("TRANSPARANSI KARTU APLIKASI", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("TRANSPARANSI KARTU APLIKASI", "gaya_drawer", accents[accentIndex])
         Text("${(appCardOpacity * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = appCardOpacity, onValueChange = onAppCardOpacity, valueRange = 0.35f..1f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("UKURAN TEKS LABEL APLIKASI", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("UKURAN TEKS LABEL APLIKASI", "huruf_kustom", accents[accentIndex])
         Text("${(appLabelScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = appLabelScale, onValueChange = onAppLabelScale, valueRange = 0.8f..1.4f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("UKURAN JAM ANALOG", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("UKURAN JAM ANALOG", "label_analog_clock", accents[accentIndex])
         Text("${(analogClockScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = analogClockScale, onValueChange = onAnalogClockScale, valueRange = 0.7f..1.5f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("KETEBALAN ANGKA JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("KETEBALAN ANGKA JAM", "label_numbers_digital", accents[accentIndex])
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Tipis", "Normal", "Tebal").forEachIndexed { index, label ->
                 Surface(color = if (digitalClockWeight == index) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f).clickable { onDigitalClockWeight(index) }, border = androidx.compose.foundation.BorderStroke(if (digitalClockWeight == index) 1.dp else 0.dp, accents[accentIndex])) {
@@ -739,15 +763,15 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
         }
         HorizontalDivider(color = Color(0xFF263348))
-        Text("TRANSPARANSI KARTU JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("TRANSPARANSI KARTU JAM", "widget_kustom", accents[accentIndex])
         Text("${(homeCardOpacity * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = homeCardOpacity, onValueChange = onHomeCardOpacity, valueRange = 0.35f..1f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("UKURAN JAM DIGITAL", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("UKURAN JAM DIGITAL", "digital_clock_digits", accents[accentIndex])
         Text("${(homeClockScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = homeClockScale, onValueChange = onHomeClockScale, valueRange = 0.8f..1.4f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("FORMAT JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("FORMAT JAM", "digital_clock_digits", accents[accentIndex])
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             listOf(true to "24 JAM", false to "12 JAM").forEach { (is24, label) ->
                 Surface(color = if (use24Hour == is24) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f).clickable { onUse24Hour(is24) }, border = androidx.compose.foundation.BorderStroke(if (use24Hour == is24) 1.dp else 0.dp, accents[accentIndex])) {
@@ -790,7 +814,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             }
             Switch(checked = showAnalogClockWidget, onCheckedChange = onShowAnalogClockWidget, colors = SwitchDefaults.colors(checkedTrackColor = accents[accentIndex]))
         }
-        Text("FORMAT TANGGAL", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("FORMAT TANGGAL", "label_calendar_date", accents[accentIndex])
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             listOf("Lengkap", "Singkat", "Angka").forEachIndexed { index, label ->
                 Surface(color = if (dateFormatIndex == index) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f).clickable { onDateFormat(index) }, border = androidx.compose.foundation.BorderStroke(if (dateFormatIndex == index) 1.dp else 0.dp, accents[accentIndex])) {
@@ -798,7 +822,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
                 }
             }
         }
-        Text("DESAIN JAM ANALOG", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("DESAIN JAM ANALOG", "label_analog_clock", accents[accentIndex])
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             (0..4).forEach { index ->
                 Surface(color = if (clockFaceIndex == index) accents[accentIndex].copy(alpha = 0.2f) else Panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.weight(1f).clickable { onClockFace(index) }, border = androidx.compose.foundation.BorderStroke(if (clockFaceIndex == index) 1.dp else 0.dp, accents[accentIndex])) {
@@ -815,15 +839,15 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
                 }
             }
         }
-        Text("PANJANG JARUM JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("PANJANG JARUM JAM", "label_clock_hands", accents[accentIndex])
         Text("${(handLengthScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = handLengthScale, onValueChange = onHandLengthScale, valueRange = 0.7f..1.2f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("KETEBALAN JARUM JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("KETEBALAN JARUM JAM", "label_clock_hands", accents[accentIndex])
         Text("${(handThicknessScale * 100).toInt()}%", color = accents[accentIndex], fontSize = 20.sp)
         Slider(value = handThicknessScale, onValueChange = onHandThicknessScale, valueRange = 0.7f..1.5f, colors = SliderDefaults.colors(thumbColor = accents[accentIndex], activeTrackColor = accents[accentIndex]))
         HorizontalDivider(color = Color(0xFF263348))
-        Text("GAYA JARUM JAM", color = TextMuted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FeatureSectionHeader("GAYA JARUM JAM", "gaya_dock", accents[accentIndex])
         Text("Pilih warna dan ketebalan jarum analog", color = TextMuted, fontSize = 12.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             listOf("Neo", "Emas", "Neon", "Gelap", "Aksen").forEachIndexed { index, label ->
@@ -843,7 +867,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Settings, contentDescription = null, tint = accents[accentIndex], modifier = Modifier.size(24.dp))
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                    Text("Pengaturan Android", color = TextMain, fontWeight = FontWeight.Medium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { FeatureAssetIcon("settings_gears", 22.dp); Text("Pengaturan Android", color = TextMain, fontWeight = FontWeight.Medium) }
                     Text("Wi-Fi, layar, aplikasi dan sistem", color = TextMuted, fontSize = 12.sp)
                 }
                 Text("↗", color = accents[accentIndex], fontSize = 22.sp)
@@ -851,7 +875,7 @@ private fun LauncherSettings(accentIndex: Int, onAccent: (Int) -> Unit, iconScal
         }
         Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("CUACA", color = accents[accentIndex], fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { FeatureAssetIcon("weather_sun_cloud", 26.dp); Text("CUACA", color = accents[accentIndex], fontWeight = FontWeight.Bold) }
                 Text("Integrasi sumber cuaca akan ditambahkan agar data akurat dan diperbarui.", color = TextMuted, fontSize = 12.sp)
             }
         }
