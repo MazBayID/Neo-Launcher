@@ -2,7 +2,7 @@
 
 **Neo-Launcher** adalah prototipe launcher Android bertema futuristik gelap, dibuat dengan **Kotlin** dan **Jetpack Compose**. Proyek ini dikembangkan bertahap; daftar fitur yang sudah selesai dan yang masih direncanakan dicatat di [ROADMAP_121_FITUR.md](ROADMAP_121_FITUR.md).
 
-> **Versi saat ini:** v0.11.8 · **versionCode:** 43  
+> **Versi saat ini:** v0.11.9 · **versionCode:** 44  
 > **Status:** build debug melalui GitHub Actions berhasil pada versi terakhir yang tercatat. Tetap uji di perangkat Android sebelum dipakai sebagai launcher harian.
 
 ## Fitur yang tersedia
@@ -16,6 +16,7 @@
 - Kartu widget jam dengan pengaturan transparansi.
 - Widget baterai dengan status pengisian/penuh dan pintasan ke pengaturan baterai Android.
 - Pilihan preset latar beranda dan aksen warna.
+- Ikon aset khusus untuk sejumlah bagian pengaturan dan kontrol launcher.
 - Preferensi tampilan utama disimpan secara lokal.
 
 ### Laci aplikasi
@@ -31,7 +32,7 @@
 
 ## Aset visual
 
-Aset PNG jam/tanggal tersedia di `app/src/main/res/drawable-nodpi/`. Folder ini berisi 50 aset PNG yang digunakan sebagai sumber visual proyek. Tidak semua aset harus tampil pada setiap gaya atau konfigurasi.
+Aset PNG jam/tanggal tersedia di `app/src/main/res/drawable-nodpi/`. Folder ini kini memuat 150 aset PNG: 50 aset jam/tanggal dan 100 ikon fungsi tambahan. Ikon fungsi dipetakan ke kontrol launcher yang sesuai (misalnya jam, tanggal, drawer, ukuran ikon, baterai, dan pengaturan). Nama berkas menjadi petunjuk pemetaan, bukan aturan mutlak; integrasi dipilih berdasarkan fungsi yang benar-benar tersedia. Sejumlah ikon menggambarkan fitur yang masih direncanakan dan belum berarti fungsinya sudah aktif.
 
 ## Persyaratan pengembangan
 
